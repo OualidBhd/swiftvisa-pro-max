@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -16,18 +17,17 @@ export default function Home() {
       </header>
 
       <main className="flex-grow p-8 space-y-16">
-        <<section className="text-center">
-  <h1 className="text-5xl font-extrabold mb-6">Welcome to SwiftVisa</h1>
-  <p className="text-xl mb-8">Your fast and friendly way to get eVisas online!</p>
+        <section className="text-center">
+          <h1 className="text-5xl font-extrabold mb-6">Welcome to SwiftVisa</h1>
+          <p className="text-xl mb-8">Your fast and friendly way to get eVisas online!</p>
 
-  <Link href="/apply">
-    <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg">
-      Start Application
-    </button>
-  </Link>
-</section>
-
-        {/* باقي الأقسام... */}
+          <button
+            onClick={handleClick}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg"
+          >
+            Start Application
+          </button>
+        </section>
       </main>
 
       <footer className="bg-gray-200 text-center p-4 text-sm text-gray-700">
