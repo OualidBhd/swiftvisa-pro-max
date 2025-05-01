@@ -1,121 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import ApplicationCard from '../components/ApplicationCard';
 
 export default function Dashboard() {
-  const [formData, setFormData] = useState({
-    passport: null as File | null,
-    residenceCard: null as File | null,
-    personalPhoto: null as File | null,
-    additionalDocuments: null as File | null,
-    travelDate: '',
-  });
-
-  const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFormData({ ...formData, [field]: e.target.files[0] });
-    }
-  };
-
-  const handleChangeDate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, travelDate: e.target.value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitted Data:', formData);
-    alert('Your information has been saved!');
-  };
-
   return (
-    <div className="min-h-screen bg-blue-50 p-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Your Visa Application Dashboard</h1>
+    <div className="flex min-h-screen bg-gray-100">
+      <Sidebar />
+      <main className="flex-1 p-6">
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-1">Hello, Arash!</h1>
+          <p className="text-gray-600">Track and manage your visa applications</p>
+        </header>
 
-        <div className="mb-4">
-          <p className="text-gray-600">Application Status: <span className="font-semibold text-yellow-600">Pending</span></p>
-          <p className="text-gray-600">Payment Status: <span className="font-semibold text-red-600">Unpaid</span></p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Passport Upload */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Passport Scan (Required)</label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleChangeFile(e, 'passport')}
-              required
-              className="block w-full border p-2 rounded"
-            />
-            <p className="text-sm text-gray-500 mt-1">Please upload a clear scan of your valid passport.</p>
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold text-blue-600 mb-3">Student Application Process</h2>
+          <div className="flex justify-between bg-white rounded-md p-4 shadow-sm text-sm font-medium text-gray-700">
+            <span>Step 1</span>
+            <span>Step 2</span>
+            <span>Step 3</span>
+            <span>Step 4</span>
+            <span>Step 5</span>
           </div>
+        </section>
 
-          {/* Residence Card Upload */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Residence Card (Required)</label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleChangeFile(e, 'residenceCard')}
-              required
-              className="block w-full border p-2 rounded"
-            />
-            <p className="text-sm text-gray-500 mt-1">Upload your residence permit if required.</p>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ApplicationCard title="Student Application" status="Filling" percent={65} />
+          <ApplicationCard title="Visitor Application" status="Pending" percent={30} />
+          <div className="flex items-center justify-center border-2 border-dashed border-blue-400 p-4 rounded-lg cursor-pointer hover:bg-blue-50 text-blue-600 font-semibold">
+            + Add New Application
           </div>
-
-          {/* Personal Photo Upload */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Personal Photo (Required)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleChangeFile(e, 'personalPhoto')}
-              required
-              className="block w-full border p-2 rounded"
-            />
-            <p className="text-sm text-gray-500 mt-1">Upload a recent passport-sized photo.</p>
-          </div>
-
-          {/* Additional Documents (Optional) */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Additional Documents (Optional)</label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => handleChangeFile(e, 'additionalDocuments')}
-              className="block w-full border p-2 rounded"
-            />
-            <p className="text-sm text-gray-500 mt-1">Optional: upload your flight ticket, hotel booking, or any other supporting documents.</p>
-          </div>
-
-          {/* Travel Date */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Travel Date (Required)</label>
-            <input
-              type="date"
-              value={formData.travelDate}
-              onChange={handleChangeDate}
-              required
-              className="block w-full border p-2 rounded"
-            />
-            <p className="text-sm text-gray-500 mt-1">Select your intended travel date.</p>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Save and Continue
-          </button>
-
-          {/* Logout */}
-          <div className="text-center mt-4">
-            <button className="text-red-500 hover:underline text-sm">Logout</button>
-          </div>
-        </form>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
