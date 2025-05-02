@@ -32,10 +32,39 @@ export default function ApplyPage() {
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitted Data:', formData);
-    alert('Application Submitted!');
+
+    const form = new FormData();
+    form.append('fullName', formData.fullName);
+    form.append('email', formData.email);
+    form.append('countryOfOrigin', formData.countryOfOrigin);
+    form.append('destinationCountry', formData.destinationCountry);
+    form.append('visaType', formData.visaType);
+    form.append('travelDate', formData.travelDate);
+
+    if (formData.passportImage) form.append('passportImage', formData.passportImage);
+    if (formData.residencePermit) form.append('residencePermit', formData.residencePermit);
+    if (formData.personalPhoto) form.append('personalPhoto', formData.personalPhoto);
+    if (formData.additionalDocs) form.append('additionalDocs', formData.additionalDocs);
+
+    try {
+      const res = await fetch('/api/apply', {
+        method: 'POST',
+        body: form,
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        alert('Application submitted successfully!');
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Submit Error:', error);
+      alert('Something went wrong while submitting the form.');
+    }
   };
 
   return (
