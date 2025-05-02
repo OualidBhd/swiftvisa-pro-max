@@ -1,7 +1,7 @@
 {
     "build": {
       "env": {
-        "DATABASE_URL": "@database_url"
+        "DATABASE_URL": "@DATABASE_URL"
       }
     },
     "functions": {
@@ -9,5 +9,5 @@
         "runtime": "nodejs18.x"
       }
     },
-    "buildCommand": "prisma generate && next build"
+    "buildCommand": "npm run generate && next build"
   }
