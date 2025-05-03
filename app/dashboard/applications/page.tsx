@@ -1,4 +1,4 @@
-import ApplicationsTable from '@/components/ApplicationsTable';
+import ApplicationsTable from '../../components/ApplicationsTable';
 
 export default function ApplicationsPage() {
   const userId = 'demo-user-id';
