@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/prisma'; // تأكد أن المسار صحيح
+import { prisma } from '@/lib/prisma'; // تأكد أن المسار صحيح
 
 export async function GET(
   req: NextRequest,
