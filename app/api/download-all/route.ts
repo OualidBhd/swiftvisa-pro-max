@@ -34,10 +34,10 @@ export async function GET(req: NextRequest) {
     const zip = new JSZip();
 
     const files = [
-      { name: 'passportImage', url: app.passportImage },
-      { name: 'residencePermit', url: app.residencePermit },
-      { name: 'personalPhoto', url: app.personalPhoto },
-      { name: 'additionalDocs', url: app.additionalDocs },
+      { name: 'passportImage', url: (app as any).passportImage },
+      { name: 'residencePermit', url: (app as any).residencePermit },
+      { name: 'personalPhoto', url: (app as any).personalPhoto },
+      { name: 'additionalDocs', url: (app as any).additionalDocs },
     ];
 
     for (const file of files) {

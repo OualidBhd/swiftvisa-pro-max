@@ -26,7 +26,7 @@ console.log('Received data:', body); // <-- أضف هذا السطر
         countryOfOrigin: body.countryOfOrigin,
         destinationCountry: body.destinationCountry,
         visaType: body.visaType,
-        travelDate: body.travelDate ? new Date(body.travelDate) : null,
+        ...(body.travelDate && { travelDate: new Date(body.travelDate) }),
         passportImage: body.passportImage,
         residencePermit: body.residencePermit,
         personalPhoto: body.personalPhoto,

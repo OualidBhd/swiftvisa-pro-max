@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import app from 'next/app';
 
 export default async function AdminApplicationsPage() {
   const session = await getServerSession(authOptions);
@@ -12,6 +13,13 @@ export default async function AdminApplicationsPage() {
 
   const applications = await prisma.application.findMany({
     orderBy: { createdAt: 'desc' },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
   });
 
   return (
@@ -26,15 +34,14 @@ export default async function AdminApplicationsPage() {
               <th className="p-3 border">Email</th>
               <th className="p-3 border">Visa Type</th>
               <th className="p-3 border">Status</th>
-              <th className="p-3 border">Submitted</th>
             </tr>
           </thead>
           <tbody className="text-gray-700">
             {applications.map((app) => (
               <tr key={app.id} className="hover:bg-gray-50">
-                <td className="p-3 border">{app.fullName}</td>
-                <td className="p-3 border">{app.email}</td>
-                <td className="p-3 border">{app.visaType}</td>
+                <td className="p-3 border">{app.userId}</td>
+                <td className="p-3 border">{app.user.email}</td>
+                <td className="p-3 border">{app.type}</td>
                 <td className="p-3 border capitalize">{app.status}</td>
                 <td className="p-3 border">{new Date(app.createdAt).toLocaleDateString()}</td>
               </tr>
