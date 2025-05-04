@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // تأكد أن المسار صحيح
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
-  const { userId } = params;
+  const userId = params.userId;
+
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'User ID is required' }, { status: 400 });
+  }
 
   try {
     const applications = await prisma.application.findMany({

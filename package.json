@@ -19,7 +19,7 @@
     "formidable": "^3.5.4",
     "jszip": "^3.10.1",
     "next": "15.3.1",
-    "next-auth": "^4.24.11",
+    "next-auth": "^4.24.7",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "react": "^19.0.0",
