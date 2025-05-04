@@ -32,22 +32,31 @@ export default function ApplyPage() {
   };
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
+    if (!file) return '';
     const form = new FormData();
     form.append('file', file);
 
     const res = await fetch('/api/upload', { method: 'POST', body: form });
+    if (!res.ok) throw new Error('Upload failed');
     const data = await res.json();
-    if (!data.url) throw new Error('Upload failed');
+    if (!data.url) throw new Error('No URL returned from upload');
     return data.url;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const passportImageUrl = formData.passportImage ? await uploadToCloudinary(formData.passportImage) : '';
-      const residencePermitUrl = formData.residencePermit ? await uploadToCloudinary(formData.residencePermit) : '';
-      const personalPhotoUrl = formData.personalPhoto ? await uploadToCloudinary(formData.personalPhoto) : '';
-      const additionalDocsUrl = formData.additionalDocs ? await uploadToCloudinary(formData.additionalDocs) : '';
+      const [
+        passportImageUrl,
+        residencePermitUrl,
+        personalPhotoUrl,
+        additionalDocsUrl
+      ] = await Promise.all([
+        formData.passportImage ? uploadToCloudinary(formData.passportImage) : '',
+        formData.residencePermit ? uploadToCloudinary(formData.residencePermit) : '',
+        formData.personalPhoto ? uploadToCloudinary(formData.personalPhoto) : '',
+        formData.additionalDocs ? uploadToCloudinary(formData.additionalDocs) : ''
+      ]);
 
       const payload = {
         fullName: formData.fullName,
