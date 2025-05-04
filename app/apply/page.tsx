@@ -21,26 +21,23 @@ export default function ApplyPage() {
     additionalDocs: null as File | null,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const target = e.target as HTMLInputElement;
+    const { name, value, type, files } = target;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const { name } = e.target;
-      setFormData({ ...formData, [name]: e.target.files[0] });
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'file' ? files?.[0] ?? null : value,
+    }));
   };
-
-  const nextStep = () => setStep(step + 1);
-  const prevStep = () => setStep(step - 1);
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const form = new FormData();
     form.append('file', file);
+
     const res = await fetch('/api/upload', { method: 'POST', body: form });
     const data = await res.json();
+    if (!data.url) throw new Error('Upload failed');
     return data.url;
   };
 
@@ -117,12 +114,12 @@ export default function ApplyPage() {
         {step === 1 && (
           <div>
             <h2 className="text-2xl font-bold text-[#1F2D5A] mb-6 text-center">Step 1: Personal & Travel Info</h2>
-            <input name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange} className="w-full p-3 mb-4 border rounded" required />
-            <input name="email" placeholder="Email" type="email" value={formData.email} onChange={handleChange} className="w-full p-3 mb-4 border rounded" required />
-            <input name="countryOfOrigin" placeholder="Country of Origin" value={formData.countryOfOrigin} onChange={handleChange} className="w-full p-3 mb-4 border rounded" required />
-            <input name="destinationCountry" placeholder="Destination Country" value={formData.destinationCountry} onChange={handleChange} className="w-full p-3 mb-6 border rounded" required />
+            <input name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleInput} className="w-full p-3 mb-4 border rounded" required />
+            <input name="email" type="email" placeholder="Email" value={formData.email} onChange={handleInput} className="w-full p-3 mb-4 border rounded" required />
+            <input name="countryOfOrigin" placeholder="Country of Origin" value={formData.countryOfOrigin} onChange={handleInput} className="w-full p-3 mb-4 border rounded" required />
+            <input name="destinationCountry" placeholder="Destination Country" value={formData.destinationCountry} onChange={handleInput} className="w-full p-3 mb-6 border rounded" required />
             <div className="flex justify-center">
-              <button type="button" onClick={nextStep} className="bg-[#D1633C] text-white py-2 px-6 rounded-full hover:bg-[#bb5431]">Continue</button>
+              <button type="button" onClick={() => setStep(2)} className="bg-[#D1633C] text-white py-2 px-6 rounded-full hover:bg-[#bb5431]">Continue</button>
             </div>
           </div>
         )}
@@ -130,16 +127,16 @@ export default function ApplyPage() {
         {step === 2 && (
           <div>
             <h2 className="text-2xl font-bold text-[#1F2D5A] mb-6 text-center">Step 2: Visa Type & Travel Date</h2>
-            <select name="visaType" value={formData.visaType} onChange={handleChange} className="w-full p-3 mb-4 border rounded" required>
+            <select name="visaType" value={formData.visaType} onChange={handleInput} className="w-full p-3 mb-4 border rounded" required>
               <option value="">Select Visa Type</option>
               <option value="Tourist Visa">Tourist Visa</option>
               <option value="Business Visa">Business Visa</option>
               <option value="Student Visa">Student Visa</option>
             </select>
-            <input name="travelDate" type="date" value={formData.travelDate} onChange={handleChange} className="w-full p-3 mb-6 border rounded" required />
+            <input name="travelDate" type="date" value={formData.travelDate} onChange={handleInput} className="w-full p-3 mb-6 border rounded" required />
             <div className="flex justify-between">
-              <button type="button" onClick={prevStep} className="bg-gray-400 text-white py-2 px-6 rounded-full hover:bg-gray-500">Back</button>
-              <button type="button" onClick={nextStep} className="bg-[#D1633C] text-white py-2 px-6 rounded-full hover:bg-[#bb5431]">Continue</button>
+              <button type="button" onClick={() => setStep(1)} className="bg-gray-400 text-white py-2 px-6 rounded-full hover:bg-gray-500">Back</button>
+              <button type="button" onClick={() => setStep(3)} className="bg-[#D1633C] text-white py-2 px-6 rounded-full hover:bg-[#bb5431]">Continue</button>
             </div>
           </div>
         )}
@@ -149,16 +146,16 @@ export default function ApplyPage() {
             <h2 className="text-2xl font-bold text-[#1F2D5A] mb-6 text-center">Step 3: Upload Documents</h2>
             <div className="space-y-4">
               <label className="block">Passport Image</label>
-              <input type="file" name="passportImage" onChange={handleFileChange} className="w-full p-3 border rounded bg-white" required />
+              <input type="file" name="passportImage" onChange={handleInput} className="w-full p-3 border rounded bg-white" required />
               <label className="block">Residence Permit</label>
-              <input type="file" name="residencePermit" onChange={handleFileChange} className="w-full p-3 border rounded bg-white" required />
+              <input type="file" name="residencePermit" onChange={handleInput} className="w-full p-3 border rounded bg-white" required />
               <label className="block">Personal Photo</label>
-              <input type="file" name="personalPhoto" onChange={handleFileChange} className="w-full p-3 border rounded bg-white" required />
+              <input type="file" name="personalPhoto" onChange={handleInput} className="w-full p-3 border rounded bg-white" required />
               <label className="block">Additional Documents (Optional)</label>
-              <input type="file" name="additionalDocs" onChange={handleFileChange} className="w-full p-3 border rounded bg-white" />
+              <input type="file" name="additionalDocs" onChange={handleInput} className="w-full p-3 border rounded bg-white" />
             </div>
             <div className="flex justify-between mt-6">
-              <button type="button" onClick={prevStep} className="bg-gray-400 text-white py-2 px-6 rounded-full hover:bg-gray-500">Back</button>
+              <button type="button" onClick={() => setStep(2)} className="bg-gray-400 text-white py-2 px-6 rounded-full hover:bg-gray-500">Back</button>
               <button type="submit" className="bg-green-600 text-white py-2 px-6 rounded-full hover:bg-green-700">Send Application</button>
             </div>
           </div>

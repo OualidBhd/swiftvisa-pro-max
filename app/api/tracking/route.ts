@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const application = await prisma.application.findFirst({
       where: {
-        email,
+        email: email, // Replace 'email' with the actual field name in your Prisma schema if different
         trackingCode,
       },
     });

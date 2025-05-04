@@ -10,6 +10,9 @@ datasource db {
 
 model User {
   id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  role          String         @default("user") // <-- أضف هذا السطر
   createdAt     DateTime       @default(now())
   applications  Application[]  @relation("UserApplications")
 }
