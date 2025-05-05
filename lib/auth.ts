@@ -6,7 +6,6 @@ import { prisma } from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -24,31 +23,25 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM,
     }),
   ],
-
   secret: process.env.NEXTAUTH_SECRET,
-
-  session: {
-    strategy: 'jwt', // نستخدم JWT بدلاً من database sessions
-  },
-
   pages: {
     signIn: '/login',
   },
-
+  session: {
+    strategy: 'jwt',
+  },
   callbacks: {
     async jwt({ token, user }) {
-      // عند تسجيل الدخول لأول مرة
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role; // إذا كان عندك role
+        token.role = (user as any).role as 'ADMIN' | 'USER';
       }
       return token;
     },
-
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as 'ADMIN' | 'USER';
       }
       return session;
     },
