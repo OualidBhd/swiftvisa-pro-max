@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ArrowPathIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -13,52 +13,34 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
+    if (status === 'authenticated') {
+      if (session?.user?.role === 'ADMIN') {
+        router.push('/admin'); // إذا بغيتي تدخلو للأدمين
+      } else {
+        router.push('/dashboard');
+      }
     }
-  }, [status, router]);
+  }, [session, status]);
 
-  const fetchData = useCallback(async () => {
-    if (status !== 'authenticated') return;
+  useEffect(() => {
+    const fetchUserApplications = async () => {
+      if (status !== 'authenticated' || !session?.user?.id) return;
 
-    try {
-      if (session?.user?.email) {
-        const res = await fetch('/api/apply');
+      try {
+        const res = await fetch(`/api/applications/${session.user.id}`);
         const data = await res.json();
         if (data.success && data.applications.length > 0) {
           setAppData(data.applications[0]);
-          return;
         }
+      } catch (err) {
+        console.error('Error fetching user applications:', err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const email = localStorage.getItem('tracking_email');
-      const code = localStorage.getItem('tracking_code');
-
-      if (!email || !code) {
-        router.push('/tracking');
-        return;
-      }
-
-      const res = await fetch('/api/tracking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, trackingCode: code }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setAppData(data.application);
-      } else {
-        router.push('/tracking');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [session, status, router]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchUserApplications();
+  }, [session, status]);
 
   const goToApply = () => {
     router.push('/apply');

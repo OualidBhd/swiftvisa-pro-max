@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   FaBars,
   FaTimes,
@@ -11,23 +13,28 @@ import {
   FaFolder,
   FaCreditCard,
   FaTicketAlt,
+  FaSignOutAlt,
 } from 'react-icons/fa';
-
-const navLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: <FaHome /> },
-  { href: '/profile', label: 'Profile', icon: <FaUser /> },
-  { href: '/storage', label: 'Storage', icon: <FaFolder /> },
-  { href: '/payment', label: 'Payment', icon: <FaCreditCard /> },
-  { href: '/ticket', label: 'Ticket', icon: <FaTicketAlt /> },
-];
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleSidebar = () => setOpen(!open);
   const closeOnMobile = () => {
     if (window.innerWidth < 768) setOpen(false);
+  };
+
+  // ✅ الانتقال إلى صفحة التتبع حسب tracking_code من localStorage
+  const handleDashboardClick = () => {
+    const trackingCode = localStorage.getItem('tracking_code');
+    if (trackingCode) {
+      router.push(`/dashboard/${trackingCode}`);
+      closeOnMobile();
+    } else {
+      alert('لم يتم العثور على كود التتبع. يرجى تقديم الطلب أو تتبعه أولاً.');
+    }
   };
 
   return (
@@ -69,22 +76,73 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="space-y-2">
-          {navLinks.map(({ href, label, icon }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={closeOnMobile}
-              className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
-                pathname === href
-                  ? 'bg-white text-blue-800 font-bold'
-                  : 'hover:bg-blue-700'
-              }`}
-            >
-              {icon}
-              <span>{label}</span>
-            </Link>
-          ))}
+          {/* زر Dashboard مخصص */}
+          <button
+            onClick={handleDashboardClick}
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 w-full text-left ${
+              pathname.startsWith('/dashboard') ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+            }`}
+          >
+            <FaHome />
+            <span>Dashboard</span>
+          </button>
+
+          {/* باقي الروابط */}
+          <Link
+            href="/profile"
+            onClick={closeOnMobile}
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
+              pathname === '/profile' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+            }`}
+          >
+            <FaUser />
+            <span>Profile</span>
+          </Link>
+
+          <Link
+            href="/storage"
+            onClick={closeOnMobile}
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
+              pathname === '/storage' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+            }`}
+          >
+            <FaFolder />
+            <span>Storage</span>
+          </Link>
+
+          <Link
+            href="/payment"
+            onClick={closeOnMobile}
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
+              pathname === '/payment' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+            }`}
+          >
+            <FaCreditCard />
+            <span>Payment</span>
+          </Link>
+
+          <Link
+            href="/ticket"
+            onClick={closeOnMobile}
+            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
+              pathname === '/ticket' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+            }`}
+          >
+            <FaTicketAlt />
+            <span>Ticket</span>
+          </Link>
         </nav>
+
+        <hr className="border-t border-white/30 my-4" />
+
+        {/* Logout Button */}
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-3 px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 w-full"
+        >
+          <FaSignOutAlt />
+          <span>Logout</span>
+        </button>
       </aside>
     </>
   );

@@ -7,8 +7,8 @@ export async function GET(
   const { userId } = params;
 
   try {
-    const applications = await prisma.application.findMany({
-      where: { userId },
+    const applications = await prisma.visaApplication.findMany({
+      where: { id: userId },
       orderBy: { createdAt: 'desc' },
     });
 

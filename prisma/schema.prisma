@@ -1,24 +1,15 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+// Removed duplicate datasource definition to resolve the error.
 
-model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  name          String?
-  role          String         @default("user") // <-- أضف هذا السطر
-  createdAt     DateTime       @default(now())
-  applications  Application[]  @relation("UserApplications")
-}
-
-model Application {
-  id                 Int       @id @default(autoincrement())
+model VisaApplication {
+  id                 String            @id @default(cuid())
   fullName           String
   email              String
   countryOfOrigin    String
@@ -28,10 +19,68 @@ model Application {
   passportImage      String
   residencePermit    String
   personalPhoto      String
-  additionalDocs     String?   // Optional field for additional documents
-  trackingCode       String    @unique
-  userId             String
-  user               User      @relation("UserApplications", fields: [userId], references: [id])
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  additionalDocs     String?
+  trackingCode       String
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt
+  status             ApplicationStatus @default(PENDING)
+
+  @@map("applications")
+}
+
+model AppUser {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role          @default(USER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+
+  @@unique([email, role])
+  @@index([email])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  type              String
+  refreshToken      String? @map("refresh_token")
+  accessToken       String? @map("access_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
+  scope             String?
+  idToken           String? @map("id_token")
+  sessionState      String? @map("session_state")
+  user              AppUser @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         AppUser  @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

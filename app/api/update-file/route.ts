@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await prisma.application.update({
+    await prisma.visaApplication.update({
       where: { id: applicationId },
       data: { [field]: url },
     });

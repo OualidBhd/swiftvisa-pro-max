@@ -1,45 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
-import { promisify } from 'util';
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+import { NextRequest, NextResponse } from 'next/server';
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-    api_key: process.env.CLOUDINARY_API_KEY!,
-    api_secret: process.env.CLOUDINARY_API_SECRET!,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-const readFile = promisify(fs.readFile);
-
 export async function POST(req: NextRequest) {
-  const form = new IncomingForm({ uploadDir: '/tmp', keepExtensions: true });
-
-  const data: any = await new Promise((resolve, reject) => {
-    form.parse(req as any, (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
-    });
-  });
-
-  const file = data.files.file;
-  const filePath = Array.isArray(file) ? file[0].filepath : file.filepath;
-
   try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'swiftvisa_uploads',
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const uploaded: any = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({}, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }).end(buffer);
     });
 
-    return NextResponse.json({ success: true, url: result.secure_url });
+    return NextResponse.json({ success: true, url: uploaded.secure_url });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Upload failed' }, { status: 500 });
   }
 }

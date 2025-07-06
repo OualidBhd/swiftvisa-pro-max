@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid request' }, { status: 400 });
     }
 
-    const updated = await prisma.application.update({
+    const updated = await prisma.visaApplication.update({
       where: { id: applicationId },
       data: {
         [field]: '', // حذف الرابط من قاعدة البيانات

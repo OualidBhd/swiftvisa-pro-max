@@ -10,23 +10,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ✅ التوجيه بعد التأكد من الدور
   useEffect(() => {
-    if (status === 'authenticated') {
-      router.push('/dashboard');
-    }
-  }, [status, router]);
+    if (status === 'authenticated' && session?.user?.role) {
+      const role = session.user.role;
 
+      if (role === 'ADMIN') {
+        router.replace('/admin');
+      } else {
+        router.replace('/dashboard');
+      }
+
+      console.log('✅ Logged in user:', session.user);
+    }
+  }, [status, session, router]);
+
+  // ✅ تنفيذ تسجيل الدخول مع زر Google
   const handleLogin = async () => {
     setLoading(true);
     setError('');
     try {
-      await signIn('google');
-    } catch (err) {
-      setError('Login failed. Please try again.');
+      await signIn('google', { callbackUrl: '/dashboard' });
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
+  // ✅ واجهة تحميل الجلسة
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -38,7 +50,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-white p-6">
       <div className="bg-white shadow-xl rounded-2xl p-10 max-w-md w-full text-center">
-        {status === 'authenticated' ? (
+        {status === 'authenticated' && session?.user?.role ? (
           <>
             <h1 className="text-2xl font-bold text-green-600 mb-2">
               Welcome, {session?.user?.name || 'User'}!

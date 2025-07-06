@@ -44,7 +44,7 @@ export default function Home() {
           </div>
           <div className="md:w-1/2">
             <Image
-              src="/images/hero-visa.png" // تأكد من وضع الصورة داخل public/images
+              src="/window.svg" // تأكد من وضع الصورة داخل public/images
               alt="Visa Application Illustration"
               width={400}
               height={400}
