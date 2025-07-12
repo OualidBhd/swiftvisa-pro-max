@@ -1,34 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+// app/api/delete-file/route.ts
 
-export async function POST(req: NextRequest) {
+import { v2 as cloudinary } from 'cloudinary';
+import { NextResponse } from 'next/server';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
+
+export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const body = await req.json();
+    const publicId = body.publicId;
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!publicId) {
+      return NextResponse.json({ error: 'Missing publicId' }, { status: 400 });
     }
 
-    const { applicationId, field } = await req.json();
+    await cloudinary.uploader.destroy(publicId);
 
-    const allowedFields = ['passportImage', 'residencePermit', 'personalPhoto', 'additionalDocs'];
-
-    if (!applicationId || !allowedFields.includes(field)) {
-      return NextResponse.json({ success: false, error: 'Invalid request' }, { status: 400 });
-    }
-
-    const updated = await prisma.visaApplication.update({
-      where: { id: applicationId },
-      data: {
-        [field]: '', // حذف الرابط من قاعدة البيانات
-      },
-    });
-
-    return NextResponse.json({ success: true, application: updated });
-  } catch (error) {
-    console.error('Delete error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to delete' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Delete error:', err);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }
