@@ -51,9 +51,10 @@ export async function POST(req: NextRequest) {
     // ✅ الإرسال عن طريق Resend
     await sendEmail(body.email, trackingCode);
 
-    return NextResponse.json({ success: true, VisaApplication: created });
+    return NextResponse.json({ success: true, visaApplication: created });
   } catch (err: any) {
     console.error('❌ Error in /apply:', err);
+    console.error('❌ Prisma error:', JSON.stringify(err, null, 2));
     return NextResponse.json(
       { success: false, error: 'حدث خطأ أثناء معالجة الطلب. حاول مرة أخرى.' },
       { status: 500 }
