@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // ✅ الإرسال عن طريق Resend
     await sendEmail(body.email, trackingCode);
 
-    return NextResponse.json({ success: true, application: created });
+    return NextResponse.json({ success: true, VisaApplication: created });
   } catch (err: any) {
     console.error('❌ Error in /apply:', err);
     return NextResponse.json(

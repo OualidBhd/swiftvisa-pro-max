@@ -7,7 +7,7 @@ import UploadField from '@/components/FileUpload';
 
 export default function ApplyPage() {
   const router = useRouter();
-  
+
 
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState(false);
@@ -52,7 +52,7 @@ export default function ApplyPage() {
       const result = await res.json();
 
       if (result.success) {
-        const code = result.application.trackingCode;
+        const code = result.VisaApplication.trackingCode;
 
         // إرسال الإيميل بعد النجاح
         await fetch('/api/send-email', {
