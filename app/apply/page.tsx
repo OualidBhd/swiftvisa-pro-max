@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+
 import UploadField from '@/components/FileUpload';
 
 export default function ApplyPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  
 
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState(false);
