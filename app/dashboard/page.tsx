@@ -1,5 +1,11 @@
+'use client';
+
+import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import TrackingDashboard from '@/components/TrackingDashboard';
+
+const TrackingDashboard = dynamic(() => import('@/components/TrackingDashboard'), {
+  ssr: false,
+});
 
 export default function DashboardPage() {
   return (
