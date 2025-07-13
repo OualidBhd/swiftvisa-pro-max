@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Sidebar from '../../components/Sidebar';
 
 export default function TicketPage() {
   const [subject, setSubject] = useState('');
@@ -70,8 +69,6 @@ export default function TicketPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <Sidebar />
-
       <main className="flex-1 p-4 md:p-6">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">💬 طلب دعم</h1>
