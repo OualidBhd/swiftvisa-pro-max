@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 
 interface Application {
   id: number;
@@ -13,36 +12,25 @@ interface Application {
 }
 
 export default function StoragePage() {
-  const { data: session } = useSession();
   const [files, setFiles] = useState<Application[]>([]);
   const [userInfo, setUserInfo] = useState<{ email: string; trackingCode: string } | null>(null);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      // مستخدم مسجل
-      fetch(`/api/application/${session.user.id}`)
+    const stored = localStorage.getItem('trackedApplication');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setUserInfo(parsed);
+      fetch('/api/tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed),
+      })
         .then((res) => res.json())
         .then((data) => {
-          if (data.success) setFiles(data.applications);
+          if (data.success) setFiles([data.application]);
         });
-    } else {
-      // مستخدم بالتتبع فقط
-      const stored = localStorage.getItem('trackedApplication');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setUserInfo(parsed);
-        fetch('/api/tracking', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(parsed),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success) setFiles([data.application]);
-          });
-      }
     }
-  }, [session]);
+  }, []);
 
   const renderFileItem = (
     label: string,
