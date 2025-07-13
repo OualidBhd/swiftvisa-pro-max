@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function TrackingDashboard() {
@@ -10,7 +9,6 @@ export default function TrackingDashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const trackingCode = searchParams.get('code');
 
   useEffect(() => {
@@ -41,6 +39,8 @@ export default function TrackingDashboard() {
     }
   }, [trackingCode, router]);
 
+  if (!trackingCode) return null;
+
   if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -51,32 +51,29 @@ export default function TrackingDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6 space-y-6">
-          <h1 className="text-2xl font-bold text-[#1F2D5A]">📦 تتبع الطلب</h1>
+    <main className="flex-1 p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6 space-y-6">
+        <h1 className="text-2xl font-bold text-[#1F2D5A]">📦 تتبع الطلب</h1>
 
-          {appData ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700 text-sm">
-              <Info label="الاسم الكامل" value={appData.fullName} />
-              <Info label="البريد الإلكتروني" value={appData.email} />
-              <Info label="بلد الأصل" value={appData.countryOfOrigin} />
-              <Info label="الوجهة" value={appData.destinationCountry} />
-              <Info label="نوع التأشيرة" value={appData.visaType} />
-              <Info label="تاريخ السفر" value={new Date(appData.travelDate).toLocaleDateString()} />
-              <Info label="رقم التتبع" value={appData.trackingCode} />
-              <div className="sm:col-span-2">
-                <p className="font-medium text-gray-600">الحالة</p>
-                <p className="font-semibold text-yellow-600">قيد المعالجة</p>
-              </div>
+        {appData ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700 text-sm">
+            <Info label="الاسم الكامل" value={appData.fullName} />
+            <Info label="البريد الإلكتروني" value={appData.email} />
+            <Info label="بلد الأصل" value={appData.countryOfOrigin} />
+            <Info label="الوجهة" value={appData.destinationCountry} />
+            <Info label="نوع التأشيرة" value={appData.visaType} />
+            <Info label="تاريخ السفر" value={new Date(appData.travelDate).toLocaleDateString()} />
+            <Info label="رقم التتبع" value={appData.trackingCode} />
+            <div className="sm:col-span-2">
+              <p className="font-medium text-gray-600">الحالة</p>
+              <p className="font-semibold text-yellow-600">قيد المعالجة</p>
             </div>
-          ) : (
-            <p className="text-center text-gray-500">لم يتم العثور على أي طلب بهذا الرمز.</p>
-          )}
-        </div>
-      </main>
-    </div>
+          </div>
+        ) : (
+          <p className="text-center text-gray-500">لم يتم العثور على أي طلب بهذا الرمز.</p>
+        )}
+      </div>
+    </main>
   );
 }
 
