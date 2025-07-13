@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const router = useRouter();
@@ -28,29 +29,42 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="px-6 py-12 md:py-20 text-center max-w-5xl mx-auto">
+      <main className="px-6 py-12 md:py-20 text-center max-w-6xl mx-auto">
         <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-10">
-          <div className="text-left md:w-1/2">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-left md:w-1/2"
+          >
             <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-blue-900 leading-tight">
               Simplify Your Travel. <br />
               Apply for Your Visa Online Today!
             </h1>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleClick}
               className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg"
             >
               Start Application
-            </button>
-          </div>
-          <div className="md:w-1/2">
+            </motion.button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9 }}
+            className="md:w-1/2"
+          >
             <Image
-              src="/window.svg" // تأكد من وضع الصورة داخل public/images
+              src="/illustrations/hero.png"
               alt="Visa Application Illustration"
-              width={400}
-              height={400}
+              width={500}
+              height={500}
               className="mx-auto"
             />
-          </div>
+          </motion.div>
         </div>
 
         {/* Features */}
@@ -58,14 +72,17 @@ export default function Home() {
           <div>
             <span className="text-3xl">🌍</span>
             <h4 className="font-semibold mt-2">100+ Visas</h4>
+            <p className="text-sm text-gray-600 mt-1">Support for over 100 countries</p>
           </div>
           <div>
             <span className="text-3xl">🔒</span>
             <h4 className="font-semibold mt-2">Secure Payment</h4>
+            <p className="text-sm text-gray-600 mt-1">Encrypted & Safe</p>
           </div>
           <div>
             <span className="text-3xl">⏰</span>
             <h4 className="font-semibold mt-2">24/7 Support</h4>
+            <p className="text-sm text-gray-600 mt-1">Always here for you</p>
           </div>
         </div>
 
@@ -86,10 +103,12 @@ export default function Home() {
             <div>
               <span className="text-4xl">💳</span>
               <h3 className="font-semibold mt-2">3. Make Payment</h3>
+              <p className="text-sm text-gray-600">Secure checkout</p>
             </div>
             <div>
               <span className="text-4xl">✅</span>
               <h3 className="font-semibold mt-2">4. Receive Visa</h3>
+              <p className="text-sm text-gray-600">Via Email</p>
             </div>
           </div>
         </section>
@@ -99,8 +118,7 @@ export default function Home() {
       <footer className="bg-gray-100 p-6 mt-20 text-center text-sm text-gray-600" id="contact">
         <p>&copy; 2025 SwiftVisa. All rights reserved.</p>
         <div className="mt-2">
-          <span>📧 contact@swiftvisa.com</span> | 
-          <span className="ml-2">📍 San Francisco, USA</span>
+          📧 contact@swiftvisa.com | 📍 San Francisco, USA
         </div>
       </footer>
     </div>

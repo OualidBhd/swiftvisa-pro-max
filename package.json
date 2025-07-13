@@ -21,6 +21,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "cloudinary": "^2.6.0",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.23.3",
     "jszip": "^3.10.1",
     "next": "^15.3.1",
     "next-auth": "^4.24.7",
