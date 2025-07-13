@@ -1,14 +1,13 @@
-import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// ✅ تعريف دالة PATCH بشكل صحيح لنظام App Router (Vercel)
 export async function PATCH(
-  req: NextRequest,
+  req: Request,
   context: { params: { id: string } }
 ) {
   const { id } = context.params
-  const { status } = await req.json()
+  const body = await req.json()
+  const { status } = body
 
   if (!id || !status) {
     return NextResponse.json({ error: 'معطيات ناقصة' }, { status: 400 })
@@ -22,7 +21,7 @@ export async function PATCH(
 
     return NextResponse.json(updated)
   } catch (err) {
-    console.error('❌ فشل تحديث الحالة:', err)
-    return NextResponse.json({ error: 'فشل في تحديث الحالة' }, { status: 500 })
+    console.error('❌ فشل في تحديث الطلب:', err)
+    return NextResponse.json({ error: 'فشل تحديث الطلب' }, { status: 500 })
   }
 }
