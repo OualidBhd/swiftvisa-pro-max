@@ -26,9 +26,12 @@ export async function sendEmail(to: string, trackingCode: string) {
       `,
     });
 
+    // ✨ أضف هاد السطر باش يبان الرد فـ الكونسول
+    console.log('✅ Resend Response:', response);
+
     return response;
   } catch (error: any) {
-    console.error('Resend send error:', error?.message || error);
+    console.error('❌ Resend send error:', error?.message || error);
     throw new Error('Failed to send email');
   }
 }
