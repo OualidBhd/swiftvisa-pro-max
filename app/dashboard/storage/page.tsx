@@ -1,6 +1,5 @@
 'use client';
 
-import Sidebar from '../../components/Sidebar';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -70,7 +69,6 @@ export default function StoragePage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <Sidebar />
       <main className="flex-1 p-4 md:p-6">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">📎 الوثائق المرفقة</h1>

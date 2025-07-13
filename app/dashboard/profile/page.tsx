@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Sidebar from '../../../components/Sidebar';
 
 export default function ProfilePage() {
   const [appData, setAppData] = useState<any>(null);
@@ -15,7 +14,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <Sidebar />
+
+      
 
       <main className="flex-1 p-4 md:p-6">
         <header className="mb-6">
