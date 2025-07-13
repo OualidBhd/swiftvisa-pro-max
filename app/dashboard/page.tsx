@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
@@ -9,11 +9,9 @@ export default function TrackingDashboard() {
   const [appData, setAppData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const params = useParams();
+  const searchParams = useSearchParams();
 
-  // ✅ استخراج الكود بطريقة آمنة
-  const rawTrackingCode = params?.trackingCode;
-  const trackingCode = Array.isArray(rawTrackingCode) ? rawTrackingCode[0] : rawTrackingCode;
+  const trackingCode = searchParams.get('code');
 
   useEffect(() => {
     const fetchApplication = async () => {

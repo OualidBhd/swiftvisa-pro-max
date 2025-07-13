@@ -25,7 +25,7 @@ export default function TrackingPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push(`/dashboard/${code}`);
+        router.push(`/dashboard?code=${code}`);
       } else {
         setError(data.error || 'No application found.');
       }
