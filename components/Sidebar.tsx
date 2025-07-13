@@ -23,6 +23,7 @@ export default function Sidebar() {
     if (window.innerWidth < 768) setOpen(false);
   };
 
+  // ✅ الانتقال إلى صفحة Dashboard مع كود التتبع من localStorage
   const handleDashboardClick = () => {
     const trackingCode = localStorage.getItem('tracking_code');
     if (trackingCode) {
@@ -33,15 +34,21 @@ export default function Sidebar() {
     }
   };
 
+  const linkClass = (active: boolean) =>
+    `flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 w-full text-left ${
+      active ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+    }`;
+
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* زر القائمة على الهاتف */}
       <div className="md:hidden p-4 bg-blue-800 text-white">
         <button onClick={toggleSidebar} className="p-2 rounded focus:outline-none">
           <FaBars />
         </button>
       </div>
 
+      {/* خلفية داكنة عند فتح القائمة على الهاتف */}
       {open && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
@@ -49,6 +56,7 @@ export default function Sidebar() {
         />
       )}
 
+      {/* الشريط الجانبي */}
       <aside
         className={`
           ${open ? 'translate-x-0' : '-translate-x-full'} 
@@ -58,65 +66,57 @@ export default function Sidebar() {
           w-64 bg-blue-800 text-white h-full p-6 space-y-6 overflow-y-auto
         `}
       >
-        {/* Close button on mobile */}
+        {/* زر إغلاق القائمة على الهاتف */}
         <div className="md:hidden flex justify-end">
           <button onClick={toggleSidebar} className="text-white focus:outline-none">
             <FaTimes size={20} />
           </button>
         </div>
 
+        {/* شعار التطبيق */}
         <h1 className="text-3xl font-bold text-white mb-8">SwiftVisa</h1>
 
+        {/* الروابط */}
         <nav className="space-y-2">
           <button
             onClick={handleDashboardClick}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 w-full text-left ${
-              pathname.startsWith('/dashboard') ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
-            }`}
+            className={linkClass(pathname === '/dashboard')}
           >
             <FaHome />
             <span>Dashboard</span>
           </button>
 
           <Link
-            href="/profile"
+            href="/dashboard/profile"
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
-              pathname === '/profile' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
-            }`}
+            className={linkClass(pathname.includes('/dashboard/profile'))}
           >
             <FaUser />
             <span>Profile</span>
           </Link>
 
           <Link
-            href="/storage"
+            href="/dashboard/storage"
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
-              pathname === '/storage' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
-            }`}
+            className={linkClass(pathname.includes('/dashboard/storage'))}
           >
             <FaFolder />
             <span>Storage</span>
           </Link>
 
           <Link
-            href="/payment"
+            href="/dashboard/payment"
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
-              pathname === '/payment' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
-            }`}
+            className={linkClass(pathname.includes('/dashboard/payment'))}
           >
             <FaCreditCard />
             <span>Payment</span>
           </Link>
 
           <Link
-            href="/ticket"
+            href="/dashboard/ticket"
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 ${
-              pathname === '/ticket' ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
-            }`}
+            className={linkClass(pathname.includes('/dashboard/ticket'))}
           >
             <FaTicketAlt />
             <span>Ticket</span>
