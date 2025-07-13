@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// ✅ تعريف دالة PATCH بشكل صحيح لنظام App Router (Vercel)
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id
-  const body = await req.json()
-  const { status } = body
+  const { id } = context.params
+  const { status } = await req.json()
 
   if (!id || !status) {
     return NextResponse.json({ error: 'معطيات ناقصة' }, { status: 400 })
