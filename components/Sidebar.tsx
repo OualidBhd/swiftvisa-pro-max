@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import {
   FaBars,
   FaTimes,
@@ -13,7 +11,6 @@ import {
   FaFolder,
   FaCreditCard,
   FaTicketAlt,
-  FaSignOutAlt,
 } from 'react-icons/fa';
 
 export default function Sidebar() {
@@ -26,11 +23,10 @@ export default function Sidebar() {
     if (window.innerWidth < 768) setOpen(false);
   };
 
-  // ✅ الانتقال إلى صفحة التتبع حسب tracking_code من localStorage
   const handleDashboardClick = () => {
     const trackingCode = localStorage.getItem('tracking_code');
     if (trackingCode) {
-      router.push(`/dashboard/${trackingCode}`);
+      router.push(`/dashboard?code=${trackingCode}`);
       closeOnMobile();
     } else {
       alert('لم يتم العثور على كود التتبع. يرجى تقديم الطلب أو تتبعه أولاً.');
@@ -46,7 +42,6 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Overlay when sidebar open on mobile */}
       {open && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
@@ -54,7 +49,6 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           ${open ? 'translate-x-0' : '-translate-x-full'} 
@@ -71,12 +65,9 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Logo */}
         <h1 className="text-3xl font-bold text-white mb-8">SwiftVisa</h1>
 
-        {/* Navigation */}
         <nav className="space-y-2">
-          {/* زر Dashboard مخصص */}
           <button
             onClick={handleDashboardClick}
             className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 w-full text-left ${
@@ -87,7 +78,6 @@ export default function Sidebar() {
             <span>Dashboard</span>
           </button>
 
-          {/* باقي الروابط */}
           <Link
             href="/profile"
             onClick={closeOnMobile}
@@ -132,17 +122,6 @@ export default function Sidebar() {
             <span>Ticket</span>
           </Link>
         </nav>
-
-        <hr className="border-t border-white/30 my-4" />
-
-        {/* Logout Button */}
-        <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center gap-3 px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 w-full"
-        >
-          <FaSignOutAlt />
-          <span>Logout</span>
-        </button>
       </aside>
     </>
   );
