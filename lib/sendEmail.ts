@@ -10,7 +10,7 @@ export async function sendEmail(to: string, trackingCode: string) {
 
   try {
     const response = await resend.emails.send({
-      from: 'SwiftVisa <noreply@swifvisaonline.com>', // مؤقتاً للبيئة التجريبية
+      from: process.env.EMAIL_FROM || '',
       to,
       subject: 'Your Visa Application - Tracking Code',
       html: `
