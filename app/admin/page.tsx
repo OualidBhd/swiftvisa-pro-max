@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 
 type Application = {
-  id: string
+  trackingCode: string
   fullName: string
   email: string
   countryOfOrigin: string
@@ -18,12 +18,16 @@ export default function AdminPage() {
   const [codeInput, setCodeInput] = useState('')
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState<string | null>(null)
 
+  // جلب الطلبات
   const fetchApplications = async () => {
     try {
       const res = await fetch('/api/admin/applications')
       const data = await res.json()
-      setApplications(data)
+      if (data.success) {
+        setApplications(data.applications)
+      }
     } catch (err) {
       console.error('فشل في جلب الطلبات:', err)
     } finally {
@@ -31,16 +35,33 @@ export default function AdminPage() {
     }
   }
 
-  const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/admin/applications/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    fetchApplications()
+  // تحديث حالة الطلب
+  const updateStatus = async (trackingCode: string, status: 'APPROVED' | 'REJECTED') => {
+    setUpdating(trackingCode)
+    try {
+      const res = await fetch(`/api/admin/applications/${trackingCode}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        alert(data.error || '❌ فشل تحديث حالة الطلب')
+      } else {
+        alert(`✅ ${data.message}`)
+        fetchApplications()
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحديث الطلب:', error)
+      alert('❌ خطأ أثناء الاتصال بالسيرفر')
+    } finally {
+      setUpdating(null)
+    }
   }
 
-  // ✅ التحقق من الكود
+  // التحقق من كود الأدمن
   useEffect(() => {
     const saved = localStorage.getItem('admin_code_verified')
     if (saved === 'true') {
@@ -103,7 +124,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {applications.map((app) => (
               <div
-                key={app.id}
+                key={app.trackingCode}
                 className="bg-white border shadow-md rounded-xl p-6 flex flex-col justify-between"
               >
                 <div>
@@ -129,16 +150,18 @@ export default function AdminPage() {
                 </div>
                 <div className="mt-4 flex gap-2">
                   <button
-                    onClick={() => updateStatus(app.id, 'APPROVED')}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded text-sm"
+                    onClick={() => updateStatus(app.trackingCode, 'APPROVED')}
+                    disabled={updating === app.trackingCode}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-1 rounded text-sm disabled:opacity-50"
                   >
-                    قبول
+                    {updating === app.trackingCode ? '...' : 'قبول'}
                   </button>
                   <button
-                    onClick={() => updateStatus(app.id, 'REJECTED')}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 rounded text-sm"
+                    onClick={() => updateStatus(app.trackingCode, 'REJECTED')}
+                    disabled={updating === app.trackingCode}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-1 rounded text-sm disabled:opacity-50"
                   >
-                    رفض
+                    {updating === app.trackingCode ? '...' : 'رفض'}
                   </button>
                 </div>
               </div>

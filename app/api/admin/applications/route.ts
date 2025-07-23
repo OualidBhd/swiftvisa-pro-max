@@ -6,26 +6,29 @@ export async function GET() {
     const applications = await db.visaApplication.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true,
+        trackingCode: true, // مهم نستعمل trackingCode
         fullName: true,
         email: true,
         countryOfOrigin: true,
         destinationCountry: true,
         visaType: true,
         travelDate: true,
+        status: true,
+        createdAt: true,
         passportImage: true,
         residencePermit: true,
         personalPhoto: true,
         additionalDocs: true,
-        trackingCode: true,
-        status: true,
-        createdAt: true,
       },
     })
 
-    return NextResponse.json(applications)
+    return NextResponse.json({
+      success: true,
+      count: applications.length,
+      applications,
+    })
   } catch (err) {
     console.error('❌ فشل في جلب الطلبات:', err)
-    return NextResponse.json({ error: 'فشل تحميل الطلبات' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'فشل تحميل الطلبات' }, { status: 500 })
   }
 }
