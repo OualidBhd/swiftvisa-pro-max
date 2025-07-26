@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 
 type Application = {
   trackingCode: string;
@@ -42,7 +43,7 @@ export default function AdminPage() {
   }, []);
 
   // تحديث حالة الطلب
-  const updateStatus = async (trackingCode: string, status: 'APPROVED' | 'REJECTED') => {
+  const updateStatus = async (trackingCode: string, status: 'APPROVED' | 'REJECTED' | 'PENDING') => {
     setUpdating(trackingCode);
     try {
       const res = await fetch(`/api/admin/applications/${trackingCode}/status`, {
@@ -96,8 +97,8 @@ export default function AdminPage() {
   // Loading UI
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">جارٍ التحميل...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300">
+        <p className="text-gray-700 text-xl">جارٍ تحميل الطلبات...</p>
       </div>
     );
   }
@@ -106,7 +107,11 @@ export default function AdminPage() {
   if (!isAllowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-blue-50 p-6">
-        <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full border border-blue-100">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full border border-blue-100"
+        >
           <h2 className="text-2xl font-bold mb-6 text-center text-blue-800">🔐 دخول الأدمن</h2>
           <input
             type="password"
@@ -121,7 +126,7 @@ export default function AdminPage() {
           >
             دخول
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -130,50 +135,70 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-blue-800 border-b pb-4">🛡️ إدارة الطلبات</h1>
+        <motion.h1
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-extrabold mb-8 text-blue-800 border-b pb-4"
+        >
+          🛡️ إدارة الطلبات
+        </motion.h1>
 
         {applications.length === 0 ? (
           <p className="text-gray-500">لا توجد طلبات حالياً.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applications.map((app) => (
-              <div
+            {applications.map((app, idx) => (
+              <motion.div
                 key={app.trackingCode}
-                className="bg-white border shadow-md rounded-xl p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white border shadow-lg hover:shadow-2xl rounded-xl p-6 flex flex-col justify-between transition-transform transform hover:scale-105"
               >
                 <div>
-                  <h2 className="text-xl font-bold text-blue-700 mb-1">{app.fullName}</h2>
+                  <h2 className="text-xl font-bold text-blue-700 mb-2">{app.fullName}</h2>
                   <p className="text-sm text-gray-600 mb-2">✉️ {app.email}</p>
-                  <p className="text-sm">🌍 {app.countryOfOrigin} ➜ {app.destinationCountry}</p>
-                  <p className="text-sm">🎯 {app.visaType}</p>
-                  <p className="text-sm">🗓️ {new Date(app.travelDate).toLocaleDateString()}</p>
-                  <p className="text-sm mt-2">
-                    <b>📂 الوثائق:</b>
-                    <ul className="list-disc list-inside text-blue-700 text-xs">
-                      <li><a href={app.passportImage} target="_blank" className="underline">جواز السفر</a></li>
-                      <li><a href={app.residencePermit} target="_blank" className="underline">بطاقة الإقامة</a></li>
-                      <li><a href={app.personalPhoto} target="_blank" className="underline">الصورة الشخصية</a></li>
-                      {app.additionalDocs && <li><a href={app.additionalDocs} target="_blank" className="underline">وثائق إضافية</a></li>}
-                    </ul>
-                  </p>
-                  <p className="mt-2 font-semibold text-gray-700">
+                  <p className="text-sm mb-1">🌍 {app.countryOfOrigin} ➜ {app.destinationCountry}</p>
+                  <p className="text-sm mb-1">🎯 {app.visaType}</p>
+                  <p className="text-sm mb-1">🗓️ {new Date(app.travelDate).toLocaleDateString()}</p>
+                  <p className="mt-3 font-semibold text-gray-700 flex items-center">
                     📝 الحالة:
                     <span
-                      className={`ml-2 px-2 py-1 text-white text-xs rounded ${
+                      className={`ml-2 px-2 py-1 text-white text-xs rounded flex items-center gap-1 ${
                         app.status === 'APPROVED'
                           ? 'bg-green-600'
                           : app.status === 'REJECTED'
                           ? 'bg-red-600'
                           : app.status === 'AWAITING_PAYMENT'
                           ? 'bg-orange-500'
-                          : 'bg-yellow-500'
+                          : 'bg-blue-500' // PENDING
                       }`}
                     >
+                      {app.status === 'AWAITING_PAYMENT' && '💳'}
+                      {app.status === 'PENDING' && '⏳'}
+                      {app.status === 'APPROVED' && '✅'}
+                      {app.status === 'REJECTED' && '❌'}
                       {app.status}
                     </span>
                   </p>
+                  <div className="mt-2 text-xs text-blue-700">
+                    <p>📂 <a href={app.passportImage} target="_blank" className="underline">جواز السفر</a></p>
+                    <p>📂 <a href={app.residencePermit} target="_blank" className="underline">بطاقة الإقامة</a></p>
+                    <p>📂 <a href={app.personalPhoto} target="_blank" className="underline">الصورة الشخصية</a></p>
+                    {app.additionalDocs && (
+                      <p>📂 <a href={app.additionalDocs} target="_blank" className="underline">وثائق إضافية</a></p>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => updateStatus(app.trackingCode, 'PENDING')}
+                    disabled={updating === app.trackingCode}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 rounded text-sm disabled:opacity-50"
+                  >
+                    {updating === app.trackingCode ? '...' : 'قيد المعالجة'}
+                  </button>
                   <button
                     onClick={() => updateStatus(app.trackingCode, 'APPROVED')}
                     disabled={updating === app.trackingCode}
@@ -189,7 +214,7 @@ export default function AdminPage() {
                     {updating === app.trackingCode ? '...' : 'رفض'}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}

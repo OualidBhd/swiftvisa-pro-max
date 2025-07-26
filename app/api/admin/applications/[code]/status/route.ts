@@ -9,6 +9,7 @@ const ALLOWED_STATUSES = [
   ApplicationStatus.PENDING,
   ApplicationStatus.APPROVED,
   ApplicationStatus.REJECTED,
+  ApplicationStatus.AWAITING_PAYMENT, // الحالة الجديدة المضافة
 ];
 
 // *************** [ GET ] ***************
@@ -96,7 +97,7 @@ export async function PATCH(req, { params }) {
     // **إرسال البريد الإلكتروني للمستخدم**
     try {
       await resend.emails.send({
-        from: 'SwiftVisa <no-reply@swiftvisaonline.com>',
+        from: 'SwiftVisa <noreply@swiftvisaonline.com>',
         to: updated.email,
         subject: `تحديث حالة طلبك رقم ${updated.trackingCode}`,
         html: `

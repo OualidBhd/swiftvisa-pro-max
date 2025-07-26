@@ -23,7 +23,7 @@ model visaApplication {
   trackingCode       String @unique
   createdAt          DateTime          @default(now()) @map("created_at")
   updatedAt          DateTime          @updatedAt
-  status             ApplicationStatus @default(PENDING)
+  status             ApplicationStatus @default(AWAITING_PAYMENT)
 
   @@map("applications")
 }
@@ -80,6 +80,7 @@ enum Role {
 }
 
 enum ApplicationStatus {
+  AWAITING_PAYMENT
   PENDING
   APPROVED
   REJECTED

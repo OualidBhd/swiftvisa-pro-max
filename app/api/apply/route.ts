@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
         personalPhoto: body.personalPhoto,
         additionalDocs: body.additionalDocs || '',
         trackingCode,
+        status: ApplicationStatus.AWAITING_PAYMENT, // ✅ تعيين الحالة الجديدة
       },
     });
-
     // ✅ الإرسال عن طريق Resend
     await sendEmail(body.email, trackingCode);
 
