@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ApplicationStatus } from '@prisma/client';
+import { Resend } from 'resend'; // مكتبة Resend
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ALLOWED_STATUSES = [
   ApplicationStatus.PENDING,
@@ -70,9 +73,10 @@ export async function PATCH(req, { params }) {
   }
 
   try {
+    // نجلب الطلب أولاً
     const existing = await db.visaApplication.findUnique({
       where: { trackingCode: code },
-      select: { trackingCode: true, status: true },
+      select: { trackingCode: true, status: true, email: true, fullName: true },
     });
 
     if (!existing) {
@@ -82,15 +86,33 @@ export async function PATCH(req, { params }) {
       );
     }
 
+    // نحدث الحالة
     const updated = await db.visaApplication.update({
       where: { trackingCode: code },
       data: { status },
-      select: { trackingCode: true, status: true },
+      select: { trackingCode: true, status: true, email: true, fullName: true },
     });
+
+    // **إرسال البريد الإلكتروني للمستخدم**
+    try {
+      await resend.emails.send({
+        from: 'SwiftVisa <no-reply@swiftvisaonline.com>',
+        to: updated.email,
+        subject: `تحديث حالة طلبك رقم ${updated.trackingCode}`,
+        html: `
+          <p>مرحباً ${updated.fullName},</p>
+          <p>تم تحديث حالة طلبك إلى: <b>${updated.status}</b></p>
+          <p>رمز التتبع: ${updated.trackingCode}</p>
+          <p>شكراً لاستخدامك SwiftVisa.</p>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('❌ فشل إرسال البريد:', emailErr);
+    }
 
     return NextResponse.json({
       success: true,
-      message: `تم تغيير الحالة إلى ${status}`,
+      message: `تم تغيير الحالة إلى ${status} وتم إرسال بريد إلكتروني.`,
       application: updated,
     });
   } catch (err) {

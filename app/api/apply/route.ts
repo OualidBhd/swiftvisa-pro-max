@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/sendEmail'; // ✅ كود Resend
+import { ApplicationStatus } from '@prisma/client'; // ✅ استيراد الحالة
 
 const generateTrackingCode = (): string => {
   const part = Math.random().toString(36).substring(2, 8).toUpperCase();

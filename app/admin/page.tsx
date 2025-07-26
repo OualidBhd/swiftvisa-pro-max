@@ -10,7 +10,11 @@ type Application = {
   destinationCountry: string;
   visaType: string;
   travelDate: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'AWAITING_PAYMENT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  passportImage: string;
+  residencePermit: string;
+  personalPhoto: string;
+  additionalDocs?: string;
 };
 
 export default function AdminPage() {
@@ -126,7 +130,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-blue-800 border-b pb-4">🛡️ الطلبات</h1>
+        <h1 className="text-4xl font-bold mb-8 text-blue-800 border-b pb-4">🛡️ إدارة الطلبات</h1>
 
         {applications.length === 0 ? (
           <p className="text-gray-500">لا توجد طلبات حالياً.</p>
@@ -135,14 +139,23 @@ export default function AdminPage() {
             {applications.map((app) => (
               <div
                 key={app.trackingCode}
-                className="bg-white border shadow-md rounded-xl p-6 flex flex-col justify-between"
+                className="bg-white border shadow-md rounded-xl p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
               >
                 <div>
-                  <h2 className="text-lg font-bold text-blue-700 mb-1">{app.fullName}</h2>
+                  <h2 className="text-xl font-bold text-blue-700 mb-1">{app.fullName}</h2>
                   <p className="text-sm text-gray-600 mb-2">✉️ {app.email}</p>
                   <p className="text-sm">🌍 {app.countryOfOrigin} ➜ {app.destinationCountry}</p>
                   <p className="text-sm">🎯 {app.visaType}</p>
                   <p className="text-sm">🗓️ {new Date(app.travelDate).toLocaleDateString()}</p>
+                  <p className="text-sm mt-2">
+                    <b>📂 الوثائق:</b>
+                    <ul className="list-disc list-inside text-blue-700 text-xs">
+                      <li><a href={app.passportImage} target="_blank" className="underline">جواز السفر</a></li>
+                      <li><a href={app.residencePermit} target="_blank" className="underline">بطاقة الإقامة</a></li>
+                      <li><a href={app.personalPhoto} target="_blank" className="underline">الصورة الشخصية</a></li>
+                      {app.additionalDocs && <li><a href={app.additionalDocs} target="_blank" className="underline">وثائق إضافية</a></li>}
+                    </ul>
+                  </p>
                   <p className="mt-2 font-semibold text-gray-700">
                     📝 الحالة:
                     <span
@@ -151,6 +164,8 @@ export default function AdminPage() {
                           ? 'bg-green-600'
                           : app.status === 'REJECTED'
                           ? 'bg-red-600'
+                          : app.status === 'AWAITING_PAYMENT'
+                          ? 'bg-orange-500'
                           : 'bg-yellow-500'
                       }`}
                     >
