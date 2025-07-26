@@ -1,95 +1,104 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react';
 
 type Application = {
-  trackingCode: string
-  fullName: string
-  email: string
-  countryOfOrigin: string
-  destinationCountry: string
-  visaType: string
-  travelDate: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-}
+  trackingCode: string;
+  fullName: string;
+  email: string;
+  countryOfOrigin: string;
+  destinationCountry: string;
+  visaType: string;
+  travelDate: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+};
 
 export default function AdminPage() {
-  const [isAllowed, setIsAllowed] = useState(false)
-  const [codeInput, setCodeInput] = useState('')
-  const [applications, setApplications] = useState<Application[]>([])
-  const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState<string | null>(null)
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   // جلب الطلبات
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/applications')
-      const data = await res.json()
+      const res = await fetch('/api/admin/applications');
+      const data = await res.json();
       if (data.success) {
-        setApplications(data.applications)
+        setApplications(data.applications);
+      } else {
+        console.error('فشل في تحميل الطلبات:', data.error);
       }
     } catch (err) {
-      console.error('فشل في جلب الطلبات:', err)
+      console.error('فشل في جلب الطلبات:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, []);
 
   // تحديث حالة الطلب
   const updateStatus = async (trackingCode: string, status: 'APPROVED' | 'REJECTED') => {
-    setUpdating(trackingCode)
+    setUpdating(trackingCode);
     try {
       const res = await fetch(`/api/admin/applications/${trackingCode}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
-      })
+      });
 
-      const data = await res.json()
-
+      const data = await res.json();
       if (!res.ok || !data.success) {
-        alert(data.error || '❌ فشل تحديث حالة الطلب')
+        alert(data.error || '❌ فشل تحديث حالة الطلب');
       } else {
-        alert(`✅ ${data.message}`)
-        fetchApplications()
+        alert(`✅ ${data.message}`);
+        fetchApplications();
       }
     } catch (error) {
-      console.error('❌ خطأ في تحديث الطلب:', error)
-      alert('❌ خطأ أثناء الاتصال بالسيرفر')
+      console.error('❌ خطأ في تحديث الطلب:', error);
+      alert('❌ خطأ أثناء الاتصال بالسيرفر');
     } finally {
-      setUpdating(null)
+      setUpdating(null);
     }
-  }
+  };
 
   // التحقق من كود الأدمن
   useEffect(() => {
-    const saved = localStorage.getItem('admin_code_verified')
+    const saved = localStorage.getItem('admin_code_verified');
     if (saved === 'true') {
-      setIsAllowed(true)
-      fetchApplications()
+      setIsAllowed(true);
+      fetchApplications();
     } else {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, [fetchApplications]);
 
   const handleCheckCode = async () => {
     const res = await fetch('/api/check-admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code: codeInput }),
-    })
+    });
 
     if (res.ok) {
-      localStorage.setItem('admin_code_verified', 'true')
-      setIsAllowed(true)
-      fetchApplications()
+      localStorage.setItem('admin_code_verified', 'true');
+      setIsAllowed(true);
+      fetchApplications();
     } else {
-      alert('❌ الكود غير صحيح')
+      alert('❌ الكود غير صحيح');
     }
+  };
+
+  // Loading UI
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">جارٍ التحميل...</p>
+      </div>
+    );
   }
 
-  if (loading) return null
-
+  // شاشة كود الأدمن
   if (!isAllowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-blue-50 p-6">
@@ -110,9 +119,10 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
+  // واجهة الأدمن
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -170,5 +180,5 @@ export default function AdminPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
