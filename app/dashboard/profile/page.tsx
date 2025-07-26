@@ -1,71 +1,86 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
+import {
+  UserIcon,
+  EnvelopeIcon,
+  GlobeAltIcon,
+  MapIcon,
+  IdentificationIcon,
+  CalendarIcon,
+  HashtagIcon,
+} from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 export default function ProfilePage() {
   const [appData, setAppData] = useState<any>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('trackedApplication');
-    if (stored) {
-      setAppData(JSON.parse(stored));
-    }
+    if (stored) setAppData(JSON.parse(stored));
   }, []);
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
+    <main className="flex-1 bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+      {/* Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative bg-noise text-black border-2 border-black rounded-b-3xl shadow-lg"
+      >
+        <div className="relative p-8 text-center">
+          <h1 className="text-4xl font-extrabold">{appData?.fullName || 'المستخدم'}</h1>
+          <p className="text-gray-800 mt-2">هذه بيانات ملفك الشخصي</p>
+        </div>
+      </motion.div>
 
-      
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="max-w-4xl mx-auto bg-white border-2 border-black rounded-2xl p-8 mt-6 space-y-8"
+      >
+        <h2 className="text-2xl font-bold text-black text-center">👤 معلوماتك الشخصية</h2>
 
-      <main className="flex-1 p-4 md:p-6">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">ملفك الشخصي</h1>
-          <p className="text-gray-600 text-sm md:text-base">معلوماتك الشخصية التي أدخلتها</p>
-        </header>
-
-        <section className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto">
-          {appData ? (
-            <form className="space-y-4">
-              <Field label="الاسم الكامل" value={appData.fullName} />
-              <Field label="البريد الإلكتروني" value={appData.email} />
-              <Field label="بلد الإقامة" value={appData.countryOfOrigin} />
-              <Field label="بلد الوجهة" value={appData.destinationCountry} />
-              <Field label="نوع التأشيرة" value={appData.visaType} />
-              <Field
-                label="تاريخ السفر"
-                value={new Date(appData.travelDate).toLocaleDateString()}
-              />
-              <Field label="رمز التتبع" value={appData.trackingCode} />
-
-              <div className="pt-4 text-right">
-                <button
-                  type="button"
-                  disabled
-                  className="bg-blue-300 cursor-not-allowed text-white font-bold py-2 px-6 rounded-full"
-                >
-                  هذه المعلومات لا يمكن تعديلها
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className="text-center text-gray-500">لا توجد بيانات متاحة في الوقت الحالي.</p>
-          )}
-        </section>
-      </main>
-    </div>
+        {appData ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700 text-sm">
+            <Info label="الاسم الكامل" value={appData.fullName} icon={<UserIcon className="w-5 h-5" />} />
+            <Info label="البريد الإلكتروني" value={appData.email} icon={<EnvelopeIcon className="w-5 h-5" />} />
+            <Info label="بلد الإقامة" value={appData.countryOfOrigin} icon={<GlobeAltIcon className="w-5 h-5" />} />
+            <Info label="بلد الوجهة" value={appData.destinationCountry} icon={<MapIcon className="w-5 h-5" />} />
+            <Info label="نوع التأشيرة" value={appData.visaType} icon={<IdentificationIcon className="w-5 h-5" />} />
+            <Info label="تاريخ السفر" value={new Date(appData.travelDate).toLocaleDateString()} icon={<CalendarIcon className="w-5 h-5" />} />
+            <Info label="رمز التتبع" value={appData.trackingCode} icon={<HashtagIcon className="w-5 h-5" />} />
+          </div>
+        ) : (
+          <p className="text-center text-gray-500">لا توجد بيانات متاحة في الوقت الحالي.</p>
+        )}
+      </motion.div>
+    </main>
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Info({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
   return (
-    <div>
-      <label className="block font-medium text-gray-700 mb-1">{label}</label>
-      <input
-        type="text"
-        value={value}
-        readOnly
-        className="w-full p-3 border rounded bg-gray-100 text-gray-800"
-      />
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+      whileHover={{ scale: 1.02 }}
+      className="relative bg-white p-4 rounded-lg border-2 border-black hover:shadow-lg transition duration-200"
+    >
+      <motion.div
+        className="absolute top-3 right-3 text-gray-700 bg-gray-100 p-1 rounded-full shadow-sm"
+        animate={{ y: [0, -2, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+      >
+        {icon}
+      </motion.div>
+      <p className="font-medium text-gray-500 mb-1">{label}</p>
+      <p className="text-gray-800 font-semibold">{value}</p>
+    </motion.div>
   );
 }

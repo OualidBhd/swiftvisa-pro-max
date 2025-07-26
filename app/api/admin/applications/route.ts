@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import type { NextRequest } from 'next/server';
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
   try {
     const applications = await db.visaApplication.findMany({
       orderBy: { createdAt: 'desc' },

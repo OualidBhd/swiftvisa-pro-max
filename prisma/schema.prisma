@@ -85,3 +85,13 @@ enum ApplicationStatus {
   APPROVED
   REJECTED
 }
+
+model SupportTicket {
+  id           Int      @id @default(autoincrement())
+  email        String
+  trackingCode String?
+  subject      String
+  message      String
+  attachment   String?
+  createdAt    DateTime @default(now())
+}

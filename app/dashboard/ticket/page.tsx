@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export default function TicketPage() {
   const [subject, setSubject] = useState('');
@@ -68,60 +69,128 @@ export default function TicketPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <main className="flex-1 p-4 md:p-6">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">💬 طلب دعم</h1>
-          <p className="text-gray-600 text-sm md:text-base">
-            إذا كنت تواجه مشكلة، يمكنك إرسال طلب دعم عبر النموذج التالي.
-          </p>
-        </header>
+    <main className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative bg-noise text-black border-2 border-black rounded-2xl shadow-lg p-6 mb-8 text-center"
+      >
+        <h1 className="text-3xl font-extrabold">💬 طلب دعم</h1>
+        <p className="text-gray-700 mt-2">
+          إذا كنت تواجه مشكلة، يمكنك إرسال طلب دعم عبر النموذج التالي.
+        </p>
+      </motion.div>
 
-        <section className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">الموضوع</label>
-              <input
-                type="text"
-                className="w-full p-3 border rounded bg-gray-50"
-                placeholder="مثلاً: خطأ أثناء تحميل الوثائق"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </div>
+      {/* Form Section */}
+      <motion.section
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="bg-white border-2 border-black rounded-2xl shadow-xl p-6 max-w-3xl mx-auto"
+      >
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <FormField
+            label="الموضوع"
+            type="text"
+            value={subject}
+            placeholder="مثلاً: خطأ أثناء تحميل الوثائق"
+            onChange={(e) => setSubject(e.target.value)}
+          />
+          <TextAreaField
+            label="الرسالة"
+            value={message}
+            placeholder="اشرح لنا المشكلة بالتفصيل..."
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <FileField
+            label="إرفاق ملف (اختياري)"
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+          />
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">الرسالة</label>
-              <textarea
-                rows={5}
-                className="w-full p-3 border rounded bg-gray-50"
-                placeholder="اشرح لنا المشكلة بالتفصيل..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </div>
+          <div className="pt-4 text-right">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-full"
+            >
+              {loading ? 'جارٍ الإرسال...' : 'إرسال'}
+            </button>
+          </div>
+        </form>
+      </motion.section>
+    </main>
+  );
+}
 
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">إرفاق ملف (اختياري)</label>
-              <input
-                type="file"
-                className="w-full p-3 border rounded bg-gray-50"
-                onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-              />
-            </div>
+function FormField({
+  label,
+  type,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  type: string;
+  value: string;
+  placeholder: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <motion.div whileHover={{ scale: 1.02 }} className="relative">
+      <label className="block font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full p-3 border-2 border-black rounded bg-gray-50 text-gray-800"
+      />
+    </motion.div>
+  );
+}
 
-            <div className="pt-4 text-right">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full"
-              >
-                {loading ? 'جارٍ الإرسال...' : 'إرسال'}
-              </button>
-            </div>
-          </form>
-        </section>
-      </main>
-    </div>
+function TextAreaField({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}) {
+  return (
+    <motion.div whileHover={{ scale: 1.02 }} className="relative">
+      <label className="block font-medium text-gray-700 mb-1">{label}</label>
+      <textarea
+        rows={5}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full p-3 border-2 border-black rounded bg-gray-50 text-gray-800"
+      />
+    </motion.div>
+  );
+}
+
+function FileField({
+  label,
+  onChange,
+}: {
+  label: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <motion.div whileHover={{ scale: 1.02 }} className="relative">
+      <label className="block font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type="file"
+        onChange={onChange}
+        className="w-full p-3 border-2 border-black rounded bg-gray-50 text-gray-800"
+      />
+    </motion.div>
   );
 }

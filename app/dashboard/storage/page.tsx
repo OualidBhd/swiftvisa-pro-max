@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { DocumentIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 
 interface Application {
   id: number;
@@ -32,56 +34,67 @@ export default function StoragePage() {
     }
   }, []);
 
-  const renderFileItem = (
-    label: string,
-    url: string | null | undefined,
-  ) => {
-    if (!url) return null;
-    const fileName = url.split('/').pop();
-    const isImage = /\.(png|jpe?g|gif|webp)$/i.test(fileName || '');
+  return (
+    <main className="flex-1 bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+      {/* Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative bg-noise text-black border-2 border-black rounded-b-3xl shadow-lg"
+      >
+        <div className="relative p-8 text-center">
+          <h1 className="text-4xl font-extrabold">📎 الوثائق المرفقة</h1>
+          <p className="text-gray-800 mt-2">هذه هي الملفات التي رفعتها أثناء تقديم الطلب.</p>
+        </div>
+      </motion.div>
 
-    return (
-      <li key={label} className="border p-3 rounded flex flex-col gap-2">
-        <p className="font-semibold text-[#1F2D5A]">{label}</p>
-        {isImage ? (
-          <img src={url} alt={label} className="w-32 h-auto rounded shadow" />
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="max-w-4xl mx-auto bg-white border-2 border-black rounded-2xl p-8 mt-6 space-y-8"
+      >
+        {files.length > 0 ? (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {files.map((app) => (
+              <div key={app.id} className="space-y-4">
+                <FileCard label="📄 صورة جواز السفر" url={app.passportImage} icon={<DocumentIcon className="w-5 h-5" />} />
+                <FileCard label="📄 بطاقة الإقامة" url={app.residencePermit} icon={<DocumentIcon className="w-5 h-5" />} />
+                <FileCard label="📄 صورة شخصية" url={app.personalPhoto} icon={<PhotoIcon className="w-5 h-5" />} />
+                <FileCard label="📎 وثائق إضافية" url={app.additionalDocs} icon={<PaperClipIcon className="w-5 h-5" />} />
+              </div>
+            ))}
+          </ul>
         ) : (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-            View Document
-          </a>
+          <p className="text-center text-gray-500">لا توجد وثائق مرفقة حالياً.</p>
         )}
-        <span className="text-xs text-gray-500 truncate max-w-[200px]">{fileName}</span>
-      </li>
-    );
-  };
+      </motion.div>
+    </main>
+  );
+}
+
+function FileCard({ label, url, icon }: { label: string; url?: string | null; icon: ReactNode }) {
+  if (!url) return null;
+  const fileName = url.split('/').pop();
+  const isImage = /\.(png|jpe?g|gif|webp)$/i.test(fileName || '');
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <main className="flex-1 p-4 md:p-6">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">📎 الوثائق المرفقة</h1>
-          <p className="text-gray-600 text-sm md:text-base">
-            هذه هي الملفات التي قمت برفعها أثناء تقديم الطلب.
-          </p>
-        </header>
-
-        <section className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto space-y-6">
-          {files.length > 0 ? (
-            <ul className="space-y-4">
-              {files.map((app) => (
-                <div key={app.id}>
-                  {renderFileItem('📄 صورة جواز السفر', app.passportImage)}
-                  {renderFileItem('📄 بطاقة الإقامة', app.residencePermit)}
-                  {renderFileItem('📄 صورة شخصية', app.personalPhoto)}
-                  {renderFileItem('📎 وثائق إضافية', app.additionalDocs)}
-                </div>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 text-sm text-center">لا توجد وثائق مرفقة حالياً.</p>
-          )}
-        </section>
-      </main>
-    </div>
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      className="relative bg-white p-4 rounded-lg border-2 border-black hover:shadow-lg transition duration-200"
+    >
+      <div className="absolute top-3 right-3 text-gray-700 bg-gray-100 p-1 rounded-full shadow-sm">{icon}</div>
+      <p className="font-medium text-gray-500 mb-1">{label}</p>
+      {isImage ? (
+        <img src={url} alt={label} className="w-40 h-auto rounded shadow" />
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+          فتح الوثيقة
+        </a>
+      )}
+      <p className="text-xs text-gray-500 mt-1 truncate">{fileName}</p>
+    </motion.div>
   );
 }
