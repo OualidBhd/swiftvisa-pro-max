@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   FaBars,
   FaTimes,
@@ -15,15 +16,24 @@ import {
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   const toggleSidebar = () => setOpen(!open);
   const closeOnMobile = () => {
-    if (window.innerWidth < 768) setOpen(false);
+    if (isMobile) setOpen(false);
   };
 
-  // ✅ الانتقال إلى صفحة Dashboard مع كود التتبع من localStorage
+  // Responsiveness
+  useEffect(() => {
+    const checkScreen = () => setIsMobile(window.innerWidth < 768);
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
+
+  // Navigate Dashboard
   const handleDashboardClick = () => {
     const trackingCode = localStorage.getItem('tracking_code');
     if (trackingCode) {
@@ -34,94 +44,120 @@ export default function Sidebar() {
     }
   };
 
+  const activeColor = '#f4b400'; // لون الخلفية للأكتيف
+  const iconActiveColor = '#e1c759'; // لون أيقونة الأكتيف
+
   const linkClass = (active: boolean) =>
-    `flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200 w-full text-left ${
-      active ? 'bg-white text-blue-800 font-bold' : 'hover:bg-blue-700'
+    `relative flex items-center gap-3 px-4 py-2 rounded-lg border transition-all duration-200 w-full text-left shadow-sm overflow-hidden
+    ${
+      active
+        ? `text-black font-bold border-gray-300`
+        : 'bg-white text-gray-800 border-gray-200 hover:bg-yellow-50'
     }`;
+
+  const navLinks = [
+    { name: 'الرئيسية', path: '/dashboard', icon: <FaHome /> },
+    { name: 'الملف الشخصي', path: '/dashboard/profile', icon: <FaUser /> },
+    { name: 'المرفقات', path: '/dashboard/storage', icon: <FaFolder /> },
+    { name: 'الدفع', path: '/dashboard/payment', icon: <FaCreditCard /> },
+    { name: 'تذكرة الدعم', path: '/dashboard/ticket', icon: <FaTicketAlt /> },
+  ];
 
   return (
     <>
-      {/* زر القائمة على الهاتف */}
-      <div className="md:hidden p-4 bg-blue-800 text-white">
-        <button onClick={toggleSidebar} className="p-2 rounded focus:outline-none">
-          <FaBars />
-        </button>
-      </div>
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <div className="p-4 bg-sky-500 text-white shadow-md flex justify-between items-center">
+          <button onClick={toggleSidebar} className="p-2 rounded focus:outline-none">
+            <FaBars size={20} />
+          </button>
+        </div>
+      )}
 
-      {/* خلفية داكنة عند فتح القائمة على الهاتف */}
-      {open && (
+      {/* Overlay on Mobile */}
+      {open && isMobile && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-40 z-40"
           onClick={toggleSidebar}
         />
       )}
 
-      {/* الشريط الجانبي */}
+      {/* Sidebar */}
       <aside
         className={`
-          ${open ? 'translate-x-0' : '-translate-x-full'} 
-          md:translate-x-0
+          ${open || !isMobile ? 'translate-x-0' : '-translate-x-full'} 
           transition-transform duration-300
           fixed md:relative top-0 left-0 z-50
-          w-64 bg-blue-800 text-white h-full p-6 space-y-6 overflow-y-auto
+          w-64 bg-sky-100 text-black h-screen p-6 space-y-6 border-r border-gray-300 shadow-lg flex flex-col justify-between
         `}
       >
-        {/* زر إغلاق القائمة على الهاتف */}
-        <div className="md:hidden flex justify-end">
-          <button onClick={toggleSidebar} className="text-white focus:outline-none">
-            <FaTimes size={20} />
-          </button>
+        <div>
+          {/* Logo Placeholder */}
+          <div className="mb-10 flex justify-center">
+            {/* هنا مستقبلاً دير <Image src="/logo.png" width={120} height={40} alt="Logo" /> */}
+            <div className="w-28 h-10 bg-gray-300 rounded" />
+          </div>
+
+          {/* Links */}
+          <nav className="space-y-2 relative">
+            {navLinks.map((link) => {
+              const active =
+                pathname === link.path ||
+                (link.path !== '/dashboard' && pathname.startsWith(link.path));
+
+              const iconColor = active ? iconActiveColor : '#555';
+
+              return link.name === 'الرئيسية' ? (
+                <button
+                  key={link.name}
+                  onClick={handleDashboardClick}
+                  className={linkClass(active)}
+                >
+                  {active && (
+                    <motion.div
+                      layoutId="active-link"
+                      className="absolute inset-0 rounded-lg z-[-1]"
+                      style={{ backgroundColor: activeColor }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    />
+                  )}
+                  <motion.span
+                    style={{ color: iconColor }}
+                    animate={active ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 0.5, repeat: active ? Infinity : 0 }}
+                  >
+                    {link.icon}
+                  </motion.span>
+                  <span>{link.name}</span>
+                </button>
+              ) : (
+                <Link
+                  key={link.name}
+                  href={link.path}
+                  onClick={closeOnMobile}
+                  className={linkClass(active)}
+                >
+                  {active && (
+                    <motion.div
+                      layoutId="active-link"
+                      className="absolute inset-0 rounded-lg z-[-1]"
+                      style={{ backgroundColor: activeColor }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    />
+                  )}
+                  <motion.span
+                    style={{ color: iconColor }}
+                    animate={active ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 0.5, repeat: active ? Infinity : 0 }}
+                  >
+                    {link.icon}
+                  </motion.span>
+                  <span>{link.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
-
-        {/* شعار التطبيق */}
-        <h1 className="text-3xl font-bold text-white mb-8">SwiftVisa</h1>
-
-        {/* الروابط */}
-        <nav className="space-y-2">
-          <button
-            onClick={handleDashboardClick}
-            className={linkClass(pathname === '/dashboard')}
-          >
-            <FaHome />
-            <span>Dashboard</span>
-          </button>
-
-          <Link
-            href="/dashboard/profile"
-            onClick={closeOnMobile}
-            className={linkClass(pathname.includes('/dashboard/profile'))}
-          >
-            <FaUser />
-            <span>Profile</span>
-          </Link>
-
-          <Link
-            href="/dashboard/storage"
-            onClick={closeOnMobile}
-            className={linkClass(pathname.includes('/dashboard/storage'))}
-          >
-            <FaFolder />
-            <span>Storage</span>
-          </Link>
-
-          <Link
-            href="/dashboard/payment"
-            onClick={closeOnMobile}
-            className={linkClass(pathname.includes('/dashboard/payment'))}
-          >
-            <FaCreditCard />
-            <span>Payment</span>
-          </Link>
-
-          <Link
-            href="/dashboard/ticket"
-            onClick={closeOnMobile}
-            className={linkClass(pathname.includes('/dashboard/ticket'))}
-          >
-            <FaTicketAlt />
-            <span>Ticket</span>
-          </Link>
-        </nav>
       </aside>
     </>
   );

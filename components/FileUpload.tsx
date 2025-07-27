@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { theme } from '@/lib/theme';
 
 type UploadFieldProps = {
-  label: string;
   onUploaded: (url: string) => void;
+  buttonStyle?: React.CSSProperties;
+  borderColor?: string;
 };
 
-export default function UploadField({ label, onUploaded }: UploadFieldProps) {
+export default function UploadField({ onUploaded, buttonStyle, borderColor }: UploadFieldProps) {
   const [uploading, setUploading] = useState(false);
   const [fileUrl, setFileUrl] = useState('');
   const [fileName, setFileName] = useState('');
@@ -35,7 +37,6 @@ export default function UploadField({ label, onUploaded }: UploadFieldProps) {
       if (!res.ok) throw new Error('فشل رفع الملف');
 
       const data = await res.json();
-
       if (data.success) {
         setFileUrl(data.url);
         onUploaded(data.url);
@@ -51,18 +52,26 @@ export default function UploadField({ label, onUploaded }: UploadFieldProps) {
 
   return (
     <div
-      className="border-2 border-black rounded-lg p-4 bg-white shadow-md hover:shadow-lg transition cursor-pointer space-y-2"
+      className="rounded-lg p-4 bg-white hover:shadow-lg transition cursor-pointer space-y-2"
+      style={{
+        border: `1px solid ${borderColor || theme.colors.border}`,
+      }}
       onClick={() => inputRef.current?.click()}
     >
-      <label className="block font-semibold text-gray-800">{label}</label>
-
       <div className="flex justify-between items-center gap-4">
-        <span className="text-sm text-gray-600">
+        <span className="text-sm" style={{ color: theme.colors.text }}>
           {uploading ? 'جاري الرفع...' : fileName || 'انقر لاختيار الوثيقة'}
         </span>
         <button
           type="button"
-          className="bg-blue-600 text-white text-sm px-4 py-1 rounded hover:bg-blue-700"
+          style={{
+            backgroundColor: theme.colors.primary,
+            color: '#fff',
+            boxShadow: theme.shadows.button,
+            padding: '4px 16px',
+            borderRadius: '4px',
+            ...buttonStyle,
+          }}
         >
           رفع
         </button>

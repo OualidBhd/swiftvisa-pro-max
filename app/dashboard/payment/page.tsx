@@ -7,6 +7,7 @@ import {
   CurrencyDollarIcon,
   IdentificationIcon,
 } from '@heroicons/react/24/outline';
+import { theme } from '@/lib/theme';
 
 interface PaymentData {
   trackingCode: string;
@@ -29,7 +30,7 @@ export default function PaymentPage() {
         trackingCode: parsed.trackingCode,
         visaType: parsed.visaType,
         amount: 99.99,
-        status: 'PENDING',
+        status: 'PENDING', // أو 'PAID' حسب الحالة
       });
     }
     setLoading(false);
@@ -58,25 +59,32 @@ export default function PaymentPage() {
 
   if (loading) {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-green-100">
-        <CreditCardIcon className="w-8 h-8 text-green-600 animate-spin" />
-        <span className="ml-2 text-sm text-gray-700">جارٍ تحميل بيانات الدفع...</span>
+      <main className="flex items-center justify-center min-h-screen" style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
+        <CreditCardIcon className="w-8 h-8 animate-spin" style={{ color: theme.colors.primary }} />
+        <span className="ml-2 text-sm" style={{ color: theme.colors.text }}>
+          جارٍ تحميل بيانات الدفع...
+        </span>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+    <main className="flex-1 min-h-screen" style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
       {/* Banner */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-noise text-black border-2 border-black rounded-b-3xl shadow-lg"
+        className="relative rounded-b-3xl shadow-lg"
+        style={{
+          backgroundColor: theme.colors.primary,
+          color: '#fff',
+          borderBottom: `2px solid ${theme.colors.border}`,
+        }}
       >
         <div className="relative p-8 text-center">
           <h1 className="text-4xl font-extrabold">💳 الدفع</h1>
-          <p className="text-gray-800 mt-2">مراجعة حالة الدفع الخاصة بطلبك.</p>
+          <p className="mt-2" style={{ color: '#f1f5f9' }}>مراجعة حالة الدفع الخاصة بطلبك.</p>
         </div>
       </motion.div>
 
@@ -85,7 +93,12 @@ export default function PaymentPage() {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="max-w-4xl mx-auto bg-white border-2 border-black rounded-2xl p-8 mt-6 space-y-8"
+        className="max-w-4xl mx-auto rounded-2xl p-8 mt-6 space-y-8"
+        style={{
+          backgroundColor: '#fff',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: theme.shadows.card,
+        }}
       >
         {paymentData ? (
           <div className="space-y-6">
@@ -110,17 +123,26 @@ export default function PaymentPage() {
               {paymentData.status === 'PENDING' ? (
                 <button
                   onClick={handlePayment}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow"
+                  className="px-6 py-3 rounded-full shadow hover:opacity-90 transition font-bold"
+                  style={{
+                    backgroundColor: theme.colors.secondary,
+                    color: '#000',
+                    boxShadow: theme.shadows.button,
+                  }}
                 >
                   الدفع الآن
                 </button>
               ) : (
-                <p className="text-green-700 font-bold text-lg">تم الدفع بنجاح ✔</p>
+                <p style={{ color: theme.colors.primary }} className="font-bold text-lg">
+                  تم الدفع بنجاح ✔
+                </p>
               )}
             </div>
           </div>
         ) : (
-          <p className="text-center text-gray-500">لا توجد بيانات دفع حالياً.</p>
+          <p className="text-center" style={{ color: theme.colors.textSecondary }}>
+            لا توجد بيانات دفع حالياً.
+          </p>
         )}
       </motion.div>
     </main>
@@ -131,22 +153,45 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="relative bg-white p-4 rounded-lg border-2 border-black hover:shadow-lg transition duration-200"
+      className="relative p-4 rounded-lg transition duration-200"
+      style={{
+        backgroundColor: '#fff',
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadows.card,
+      }}
     >
-      <div className="absolute top-3 right-3 text-gray-700 bg-gray-100 p-1 rounded-full shadow-sm">{icon}</div>
-      <p className="font-medium text-gray-500 mb-1">{label}</p>
-      <p className="text-gray-800 font-semibold">{value}</p>
+      <motion.div
+        className="absolute top-3 right-3 p-1 rounded-full flex items-center justify-center"
+        style={{
+          backgroundColor: '#fff',
+          border: `1px solid ${theme.colors.border}`, // الكونتور الكحل
+          color: theme.colors.text,
+          width: '32px',
+          height: '32px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        }}
+        animate={{ y: [0, -3, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+      >
+        {icon}
+      </motion.div>
+      <p className="font-medium mb-1" style={{ color: theme.colors.textSecondary }}>
+        {label}
+      </p>
+      <p className="font-semibold" style={{ color: theme.colors.text }}>
+        {value}
+      </p>
     </motion.div>
   );
 }
 
 function PaymentStatus({ status }: { status: 'PENDING' | 'PAID' | 'FAILED' }) {
-  const color =
+  const bgColor =
     status === 'PAID'
-      ? 'bg-green-200 text-black'
+      ? '#BBF7D0'
       : status === 'FAILED'
-      ? 'bg-red-200 text-black'
-      : 'bg-yellow-200 text-black';
+      ? '#FCA5A5'
+      : '#FDE68A';
 
   const text =
     status === 'PAID'
@@ -156,7 +201,14 @@ function PaymentStatus({ status }: { status: 'PENDING' | 'PAID' | 'FAILED' }) {
       : 'قيد الدفع';
 
   return (
-    <p className={`font-bold text-lg px-4 py-2 rounded-lg border-2 border-black ${color}`}>
+    <p
+      className="font-bold text-lg px-4 py-2 rounded-lg border-2"
+      style={{
+        backgroundColor: bgColor,
+        borderColor: theme.colors.border,
+        color: theme.colors.text,
+      }}
+    >
       {text}
     </p>
   );

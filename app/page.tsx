@@ -1,32 +1,49 @@
 "use client";
-import { useState } from "react";
+
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import heroImg from "@/public/illustrations/hero-visa.png";
+import { theme } from "@/lib/theme"; // استيراد theme
 
 const services = [
-  { title: "Visa Applications", desc: "ابدأ طلب التأشيرة بسهولة وسرعة.", icon: "/icons/apply.svg" },
-  { title: "Tracking", desc: "تتبع حالة طلبك في أي وقت.", icon: "/icons/track.svg" },
-  { title: "Support", desc: "فريقنا ديما هنا يعاونك.", icon: "/icons/support.svg" },
+  { title: "طلبات التأشيرة", desc: "ابدأ طلب التأشيرة بسهولة وسرعة.", icon: "/icons/apply.svg" },
+  { title: "تتبع الطلب", desc: "تتبع حالة طلبك في أي وقت.", icon: "/icons/track.svg" },
+  { title: "الدعم الفني", desc: "فريقنا ديما هنا يعاونك.", icon: "/icons/support.svg" },
 ];
 
-const testimonials = [
-  { name: "Ahmed", feedback: "خدمة رائعة وسريعة جدًا!" },
-  { name: "Fatima", feedback: "ساعدوني في كل خطوة، شكراً لكم!" },
+// مقالات السفر
+const blogPosts = [
+  {
+    title: "أفضل الوجهات السياحية في اليابان",
+    desc: "اكتشف أجمل المدن اليابانية، من طوكيو العصرية إلى كيوتو التاريخية، ونصائح للسفر هناك.",
+    date: "يناير 2025",
+    image: "/images/japan.jpg",
+  },
+  {
+    title: "دليلك للحصول على تأشيرة شينغن",
+    desc: "كل ما تحتاج معرفته للحصول على تأشيرة شينغن بسهولة وبخطوات بسيطة.",
+    date: "فبراير 2025",
+    image: "/images/schengen.jpg",
+  },
+  {
+    title: "أفضل الشواطئ في تايلاند",
+    desc: "اكتشف أجمل الشواطئ في تايلاند لقضاء عطلة لا تنسى، مع أفضل النصائح للسفر.",
+    date: "مارس 2025",
+    image: "/images/thailand.jpg",
+  },
 ];
 
-function Testimonial({ name, feedback }: { name: string; feedback: string }) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      className="bg-white p-6 rounded-lg shadow-lg text-center border border-blue-100 hover:shadow-2xl transition duration-300"
-    >
-      <p className="text-blue-800 font-semibold">{name}</p>
-      <p className="text-blue-600 mt-2 italic">{feedback}</p>
-    </motion.div>
-  );
-}
+// Animation Variants
+const cardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.2, duration: 0.5 },
+  }),
+};
 
 function ContactForm() {
   const [message, setMessage] = useState("");
@@ -37,48 +54,83 @@ function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gradient-to-b from-blue-50 to-white p-6 rounded-xl shadow-md max-w-md mx-auto border border-blue-100">
-      <h2 className="text-2xl font-bold text-blue-800 mb-4">Contact Us</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="p-6 rounded-xl w-full max-w-md mx-auto md:mx-0"
+      style={{
+        backgroundColor: "#fff",
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadows.card,
+      }}
+    >
+      <h2 className="text-2xl font-bold mb-4 text-center md:text-right" style={{ color: theme.colors.primary }}>
+        اتصل بنا
+      </h2>
       <input
         type="text"
-        placeholder="Your Name"
-        className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        placeholder="الاسم الكامل"
+        className="w-full p-3 mb-4 rounded bg-gray-50 focus:outline-none focus:ring-2"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
         required
       />
       <input
         type="email"
-        placeholder="Your Email"
-        className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        placeholder="البريد الإلكتروني"
+        className="w-full p-3 mb-4 rounded bg-gray-50 focus:outline-none focus:ring-2"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
         required
       />
       <textarea
-        placeholder="Your Message"
-        className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        placeholder="رسالتك"
         rows={4}
+        className="w-full p-3 mb-4 rounded bg-gray-50 focus:outline-none focus:ring-2"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
         required
       ></textarea>
       <button
         type="submit"
-        className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="px-6 py-3 rounded-full shadow transition-transform hover:scale-105"
+        style={{
+          backgroundColor: theme.colors.primary,
+          color: "#fff",
+          boxShadow: theme.shadows.button,
+        }}
       >
-        Send Message
+        إرسال
       </button>
-      {message && <p className="text-green-600 mt-3">{message}</p>}
+      {message && <p className="mt-3 text-center" style={{ color: theme.colors.success || "green" }}>{message}</p>}
     </form>
   );
 }
 
 function Navbar() {
   return (
-    <header className="bg-white/90 backdrop-blur-md shadow-md py-4 fixed top-0 w-full z-50">
+    <header
+      className="py-4 fixed top-0 w-full z-50"
+      style={{
+        backgroundColor: "#fff",
+        borderBottom: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadows.navbar,
+      }}
+    >
       <nav className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent drop-shadow-sm">
+        <h1 className="text-2xl font-extrabold" style={{ color: theme.colors.primary }}>
           SwiftVisa
         </h1>
-        <ul className="flex space-x-6">
-          <li><a href="#services" className="hover:text-blue-600 transition-colors">Services</a></li>
-          <li><a href="#testimonials" className="hover:text-blue-600 transition-colors">Testimonials</a></li>
-          <li><a href="#contact" className="hover:text-blue-600 transition-colors">Contact</a></li>
+        <ul className="flex space-x-6" style={{ color: theme.colors.text }}>
+          <li><a href="#services" className="hover:underline">الخدمات</a></li>
+          <li><Link href="/about" className="hover:underline">من نحن</Link></li>
+          <li><a href="#blog" className="hover:underline">المقالات</a></li>
+          <li><a href="#contact" className="hover:underline">اتصل بنا</a></li>
         </ul>
       </nav>
     </header>
@@ -87,28 +139,33 @@ function Navbar() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
       <Navbar />
 
       {/* Hero Section */}
-      <section className="flex flex-col md:flex-row items-center justify-between px-8 py-28 max-w-6xl mx-auto">
+      <section className="flex flex-col md:flex-row items-center justify-between px-8 pt-32 pb-16 max-w-6xl mx-auto">
         <motion.div
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="max-w-md mt-12 md:mt-0"
+          className="max-w-lg"
         >
-          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-700 via-blue-500 to-blue-400 bg-clip-text text-transparent mb-6">
-            SwiftVisa: طريقك السهل للتأشيرة
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: theme.colors.primary }}>
+            رحلتك هدفك … أوراقك مسؤوليتنا
           </h1>
-          <p className="text-blue-600 mb-8 text-lg">
-            قدم طلبك، تتبعه، وتواصل معانا من مكان واحد.
+          <p className="mb-8 text-lg" style={{ color: theme.colors.text }}>
+            قدم طلبك، تتبعه، وتواصل معنا بسهولة من مكان واحد.
           </p>
           <Link
             href="/apply"
-            className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="px-6 py-3 rounded-full shadow-md transition-transform hover:scale-105"
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: "#fff",
+              boxShadow: theme.shadows.button,
+            }}
           >
-            Apply Now
+            قدّم طلبك الآن
           </Link>
         </motion.div>
         <motion.div
@@ -123,66 +180,138 @@ export default function Home() {
             width={420}
             height={320}
             priority
-            className="drop-shadow-lg"
+            className="drop-shadow-md"
           />
         </motion.div>
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-16 bg-white">
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-8">
+      <section id="services" className="py-16 max-w-6xl mx-auto px-8">
+        <h2 className="text-3xl font-extrabold text-center mb-10" style={{ color: theme.colors.primary }}>
+          خدماتنا
+        </h2>
+        <div className="grid md:grid-cols-3 gap-8">
           {services.map((service, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              whileHover={{ y: -5, scale: 1.03 }}
-              className="bg-gradient-to-b from-blue-50 to-white p-6 rounded-xl shadow-md flex flex-col items-center text-center hover:shadow-lg transition-shadow"
+              custom={index}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover={{ scale: 1.05 }}
+              className="p-6 rounded-xl text-center transition"
+              style={{
+                backgroundColor: "#fff",
+                border: `1px solid ${theme.colors.border}`,
+                boxShadow: theme.shadows.card,
+              }}
             >
-              <Image
-                src={service.icon}
-                alt={`${service.title} Icon`}
-                width={64}
-                height={64}
-              />
-              <h3 className="text-xl font-semibold text-blue-800 mt-4">
+              <Image src={service.icon} alt={`${service.title} Icon`} width={64} height={64} />
+              <h3 className="text-xl font-semibold mt-4" style={{ color: theme.colors.primary }}>
                 {service.title}
               </h3>
-              <p className="text-blue-600 mt-2">{service.desc}</p>
+              <p className="mt-2" style={{ color: theme.colors.text }}>{service.desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 bg-blue-50">
-        <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent text-center mb-8">
-          Testimonials
+      {/* Blog & Contact Section */}
+      <section id="blog" className="py-16 border-t" style={{ borderColor: theme.colors.border }}>
+        <h2 className="text-2xl font-extrabold text-center mb-8" style={{ color: theme.colors.primary }}>
+          مقالات السفر
         </h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto px-8">
-          {testimonials.map((testimonial, index) => (
-            <Testimonial key={index} name={testimonial.name} feedback={testimonial.feedback} />
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8">
+          {blogPosts.map((post, index) => (
+            <motion.div
+              key={index}
+              custom={index}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover={{ scale: 1.05 }}
+              className="p-4 rounded-lg transition"
+              style={{
+                backgroundColor: "#fff",
+                border: `1px solid ${theme.colors.border}`,
+                boxShadow: theme.shadows.card,
+              }}
+            >
+              <Image
+                src={post.image}
+                alt={post.title}
+                width={300}
+                height={170}
+                className="rounded-md mb-3 object-cover"
+              />
+              <h3 className="text-lg font-semibold mb-1" style={{ color: theme.colors.primary }}>
+                {post.title}
+              </h3>
+              <p className="text-xs mb-2" style={{ color: theme.colors.textSecondary }}>
+                {post.date}
+              </p>
+              <p className="text-sm mb-3" style={{ color: theme.colors.text }}>
+                {post.desc}
+              </p>
+              <Link
+                href="#"
+                className="inline-block px-4 py-2 text-xs font-semibold rounded-full"
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  color: "#fff",
+                  boxShadow: theme.shadows.button,
+                }}
+              >
+                قراءة المزيد
+              </Link>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-16 bg-white">
+      {/* Contact */}
+      <section id="contact" className="py-16 max-w-6xl mx-auto px-6 md:flex md:items-start md:justify-between md:gap-8">
         <ContactForm />
       </section>
 
-      {/* Footer Section */}
-      <footer className="py-6 bg-blue-100 text-center text-blue-700">
-        <p>© {new Date().getFullYear()} SwiftVisa. All rights reserved.</p>
-        <p className="mt-2">
-          Contact us at:{" "}
-          <a href="mailto:support@swiftvisa.com" className="text-blue-800 underline">
-            support@swiftvisa.com
-          </a>
-        </p>
-      </footer>
+      {/* Footer */}
+      <footer
+  className="py-8 px-4"
+  style={{
+    backgroundColor: theme.colors.backgroundLight || "#f9fafb",
+    borderTop: `1px solid ${theme.colors.border}`,
+    color: theme.colors.text,
+  }}
+>
+  <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm md:text-base">
+    {/* اليمين */}
+    <div className="order-3 md:order-1 text-center md:text-right w-full md:w-auto">
+      © {new Date().getFullYear()} SwiftVisa. جميع الحقوق محفوظة.
+    </div>
+
+    {/* الوسط */}
+    <div className="order-1 md:order-2 text-center w-full md:w-auto">
+      تواصل معنا:{" "}
+      <a
+        href="mailto:support@swiftvisaonline.com"
+        className="underline hover:opacity-80"
+        style={{ color: theme.colors.primary }}
+      >
+        support@swiftvisaonline.com
+      </a>
+    </div>
+
+    {/* اليسار */}
+    <div className="order-2 md:order-3 flex gap-6 text-center md:text-left w-full md:w-auto justify-center md:justify-end">
+      <a href="/terms" className="hover:underline">
+        شروط الاستخدام
+      </a>
+      <a href="/privacy" className="hover:underline">
+        سياسة الخصوصية
+      </a>
+    </div>
+  </div>
+</footer>
     </main>
   );
 }

@@ -17,6 +17,7 @@ import {
   HashtagIcon,
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { theme } from '@/lib/theme';
 
 type Application = {
   fullName: string;
@@ -67,58 +68,121 @@ export default function TrackingDashboard() {
 
   if (loading) {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-green-100">
-        <ArrowPathIcon className="w-8 h-8 text-green-600 animate-spin" />
-        <span className="ml-2 text-sm text-gray-700">جارٍ تحميل الطلب...</span>
+      <main
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}
+      >
+        <ArrowPathIcon className="w-8 h-8 animate-spin" style={{ color: theme.colors.primary }} />
+        <span className="ml-2 text-sm" style={{ color: theme.colors.text }}>
+          جارٍ تحميل الطلب...
+        </span>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+    <main
+      className="flex-1 min-h-screen"
+      style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}
+    >
       {/* Banner */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-noise text-black border-2 border-black rounded-b-3xl shadow-lg"
+        className="relative rounded-b-3xl shadow-lg"
+        style={{
+          backgroundColor: theme.colors.primary,
+          color: '#fff',
+          borderBottom: `2px solid ${theme.colors.border}`,
+        }}
       >
         <div className="relative p-8 text-center">
-          <h1 className="text-4xl font-extrabold">{appData?.fullName || 'المستخدم'}</h1>
-          <p className="text-gray-800 mt-2">تتبع حالة طلبك بسهولة واطلع على جميع التفاصيل.</p>
+          <h1 className="text-4xl font-extrabold">
+            {appData?.fullName || 'المستخدم'}
+          </h1>
+          <p className="mt-2" style={{ color: '#f1f5f9' }}>
+            تتبع حالة طلبك بسهولة واطلع على جميع التفاصيل.
+          </p>
         </div>
       </motion.div>
 
       {/* Main Content */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="max-w-4xl mx-auto bg-white border-2 border-black rounded-2xl p-8 mt-6 space-y-8"
+        className="max-w-4xl mx-auto rounded-2xl p-8 mt-6 space-y-8"
+        style={{
+          backgroundColor: '#fff',
+          border: `1px solid ${theme.colors.border}`,
+          boxShadow: theme.shadows.card,
+        }}
       >
-        <h2 className="text-2xl font-bold text-black text-center">📦 تفاصيل الطلب</h2>
+        <h2
+          className="text-2xl font-bold text-center"
+          style={{ color: theme.colors.primary }}
+        >
+          📦 تفاصيل الطلب
+        </h2>
 
         {appData ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700 text-sm">
-            <Info label="الاسم الكامل" value={appData.fullName} icon={<UserIcon className="w-5 h-5" />} />
-            <Info label="البريد الإلكتروني" value={appData.email} icon={<EnvelopeIcon className="w-5 h-5" />} />
-            <Info label="بلد الأصل" value={appData.countryOfOrigin} icon={<GlobeAltIcon className="w-5 h-5" />} />
-            <Info label="الوجهة" value={appData.destinationCountry} icon={<MapIcon className="w-5 h-5" />} />
-            <Info label="نوع التأشيرة" value={appData.visaType} icon={<IdentificationIcon className="w-5 h-5" />} />
-            <Info label="تاريخ السفر" value={new Date(appData.travelDate).toLocaleDateString()} icon={<CalendarIcon className="w-5 h-5" />} />
-            <Info label="رقم التتبع" value={appData.trackingCode} icon={<HashtagIcon className="w-5 h-5" />} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+            <Info
+              label="الاسم الكامل"
+              value={appData.fullName}
+              icon={<UserIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="البريد الإلكتروني"
+              value={appData.email}
+              icon={<EnvelopeIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="بلد الأصل"
+              value={appData.countryOfOrigin}
+              icon={<GlobeAltIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="الوجهة"
+              value={appData.destinationCountry}
+              icon={<MapIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="نوع التأشيرة"
+              value={appData.visaType}
+              icon={<IdentificationIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="تاريخ السفر"
+              value={new Date(appData.travelDate).toLocaleDateString()}
+              icon={<CalendarIcon className="w-5 h-5" />}
+            />
+            <Info
+              label="رقم التتبع"
+              value={appData.trackingCode}
+              icon={<HashtagIcon className="w-5 h-5" />}
+            />
 
             {/* الحالة */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="sm:col-span-2 bg-gray-50 rounded-lg p-4 border-2 border-black shadow-inner text-center"
+              className="sm:col-span-2 rounded-lg p-4 text-center"
+              style={{
+                backgroundColor: theme.colors.background,
+                border: `1px solid ${theme.colors.border}`,
+              }}
             >
-              <p className="font-medium text-gray-700 mb-1">الحالة</p>
+              <p className="font-medium mb-1" style={{ color: theme.colors.text }}>
+                الحالة
+              </p>
               <StatusBadge status={appData.status} />
             </motion.div>
           </div>
         ) : (
-          <p className="text-center text-gray-500">لم يتم العثور على أي طلب بهذا الرمز.</p>
+          <p className="text-center" style={{ color: theme.colors.textSecondary }}>
+            لم يتم العثور على أي طلب بهذا الرمز.
+          </p>
         )}
       </motion.div>
     </main>
@@ -128,41 +192,52 @@ export default function TrackingDashboard() {
 function Info({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
       whileHover={{ scale: 1.02 }}
-      className="relative bg-white p-4 rounded-lg border-2 border-black hover:shadow-lg transition duration-200"
+      className="relative p-4 rounded-lg transition duration-200"
+      style={{
+        backgroundColor: '#fff',
+        border: `1px solid ${theme.colors.border}`,
+        boxShadow: theme.shadows.card,
+      }}
     >
       <motion.div
-        className="absolute top-3 right-3 text-gray-700 bg-gray-100 p-1 rounded-full shadow-sm"
-        animate={{ y: [0, -2, 0] }}
+        className="absolute top-3 right-3 p-1 rounded-full flex items-center justify-center"
+        style={{
+          backgroundColor: '#fff',
+          border: `1px solid ${theme.colors.border}`, // الكونتور الكحل
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          width: '32px',
+          height: '32px',
+        }}
+        animate={{ y: [0, -3, 0] }}
         transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
       >
-        {icon}
+        <span style={{ color: theme.colors.text }}>{icon}</span>
       </motion.div>
-      <p className="font-medium text-gray-500 mb-1">{label}</p>
-      <p className="text-gray-800 font-semibold">{value}</p>
+      <p className="font-medium mb-1" style={{ color: theme.colors.textSecondary }}>
+        {label}
+      </p>
+      <p className="font-semibold" style={{ color: theme.colors.text }}>
+        {value}
+      </p>
     </motion.div>
   );
 }
-
 function StatusBadge({ status }: { status: string }) {
   let color = '';
   let icon = null;
 
   if (status === 'APPROVED') {
-    color = 'bg-green-200 text-black';
+    color = 'text-green-700 bg-green-100';
     icon = <CheckCircleIcon className="w-5 h-5 inline-block mr-1" />;
   } else if (status === 'REJECTED') {
-    color = 'bg-red-200 text-black';
+    color = 'text-red-700 bg-red-100';
     icon = <XCircleIcon className="w-5 h-5 inline-block mr-1" />;
   } else if (status === 'AWAITING_PAYMENT') {
-    color = 'bg-orange-200 text-black';
+    color = 'text-orange-700 bg-orange-100';
     icon = <CurrencyDollarIcon className="w-5 h-5 inline-block mr-1" />;
   } else if (status === 'PENDING') {
-    color = 'bg-yellow-200 text-black';
+    color = 'text-yellow-700 bg-yellow-100';
     icon = <ClockIcon className="w-5 h-5 inline-block mr-1" />;
   }
 
@@ -176,7 +251,12 @@ function StatusBadge({ status }: { status: string }) {
       : 'قيد المعالجة';
 
   return (
-    <p className={`font-bold text-lg px-4 py-2 rounded-lg border-2 border-black ${color}`}>
+    <p
+      className={`font-bold text-lg px-4 py-2 rounded-lg border ${color}`}
+      style={{
+        borderColor: theme.colors.border,
+      }}
+    >
       {icon}
       {statusText}
     </p>

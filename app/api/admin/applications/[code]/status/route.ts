@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ApplicationStatus } from '@prisma/client';
-import { Resend } from 'resend'; // مكتبة Resend
+import { Resend } from 'resend';
+import type { NextRequest } from 'next/server';
 
+// إعداد Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ALLOWED_STATUSES = [
+// الحالات المسموح بها
+const ALLOWED_STATUSES: ApplicationStatus[] = [
   ApplicationStatus.PENDING,
   ApplicationStatus.APPROVED,
   ApplicationStatus.REJECTED,
-  ApplicationStatus.AWAITING_PAYMENT, // الحالة الجديدة المضافة
+  ApplicationStatus.AWAITING_PAYMENT,
 ];
 
 // *************** [ GET ] ***************
-export async function GET(_req, { params }) {
+export async function GET(_req: NextRequest, { params }: { params: { code: string } }) {
   const code = params.code;
 
   if (!code) {
@@ -44,14 +47,14 @@ export async function GET(_req, { params }) {
 }
 
 // *************** [ PATCH ] ***************
-export async function PATCH(req, { params }) {
+export async function PATCH(req: NextRequest, { params }: { params: { code: string } }) {
   const code = params.code;
 
   if (!code) {
     return NextResponse.json({ error: 'رمز التتبع مفقود' }, { status: 400 });
   }
 
-  let body;
+  let body: { status: string };
   try {
     body = await req.json();
   } catch {
@@ -65,7 +68,7 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: 'الحالة مفقودة' }, { status: 400 });
   }
 
-  const status = body.status.toUpperCase();
+  const status = body.status.toUpperCase() as ApplicationStatus;
   if (!ALLOWED_STATUSES.includes(status)) {
     return NextResponse.json(
       { error: 'القيمة المدخلة للحالة غير صالحة' },
@@ -74,7 +77,6 @@ export async function PATCH(req, { params }) {
   }
 
   try {
-    // نجلب الطلب أولاً
     const existing = await db.visaApplication.findUnique({
       where: { trackingCode: code },
       select: { trackingCode: true, status: true, email: true, fullName: true },
@@ -87,14 +89,12 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    // نحدث الحالة
     const updated = await db.visaApplication.update({
       where: { trackingCode: code },
       data: { status },
       select: { trackingCode: true, status: true, email: true, fullName: true },
     });
 
-    // **إرسال البريد الإلكتروني للمستخدم**
     try {
       await resend.emails.send({
         from: 'SwiftVisa <noreply@swiftvisaonline.com>',

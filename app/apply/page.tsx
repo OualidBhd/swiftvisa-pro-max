@@ -2,7 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  UserIcon,
+  EnvelopeIcon,
+  GlobeAltIcon,
+  MapIcon,
+  IdentificationIcon,
+  CalendarIcon,
+} from '@heroicons/react/24/outline';
 import UploadField from '@/components/FileUpload';
+import { theme } from '@/lib/theme';
 
 export default function ApplyPage() {
   const router = useRouter();
@@ -24,8 +34,7 @@ export default function ApplyPage() {
   });
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const target = e.target;
-    const { name, value, type, files } = target as HTMLInputElement;
+    const { name, value, type, files } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'file' ? files?.[0] ?? '' : value,
@@ -34,7 +43,6 @@ export default function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.passportImage || !formData.residencePermit || !formData.personalPhoto) {
       alert('يرجى رفع جميع الوثائق الإلزامية قبل الإرسال.');
       return;
@@ -51,17 +59,6 @@ export default function ApplyPage() {
 
       if (result.success) {
         const code = result.visaApplication.trackingCode;
-
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: formData.email,
-            subject: 'رمز تتبع طلبك',
-            text: `شكراً على تقديم طلبك لدى SwiftVisa.\n\nرمز تتبع الطلب الخاص بك هو: ${code}\n\nيمكنك تتبع حالة الطلب عبر صفحة التتبع.`,
-          }),
-        });
-
         setTrackingCode(code);
         setSuccess(true);
         localStorage.setItem('tracking_email', formData.email);
@@ -77,182 +74,168 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-cyan-50 text-center p-6">
-        <div className="bg-white border border-black rounded-xl shadow-[4px_4px_0px_black] p-6 w-full max-w-md">
-          <h2 className="text-2xl font-bold text-green-600 mb-4">تم تقديم الطلب بنجاح!</h2>
-          <p className="mb-2 text-gray-700">تم إرسال رمز التتبع إلى بريدك الإلكتروني:</p>
-          <p className="font-mono text-blue-600 text-sm break-all">{trackingCode}</p>
+      <main className="flex items-center justify-center min-h-screen" style={{ backgroundColor: theme.colors.background }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          style={{
+            backgroundColor: '#fff',
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: theme.radius.lg,
+            boxShadow: theme.shadows.card,
+          }}
+          className="p-8 max-w-md text-center"
+        >
+          <h2 className="text-2xl font-bold mb-4" style={{ color: 'green' }}>
+            تم تقديم الطلب بنجاح!
+          </h2>
+          <p className="mb-2" style={{ color: theme.colors.text }}>تم إرسال رمز التتبع إلى بريدك الإلكتروني:</p>
+          <p className="font-mono text-sm break-all" style={{ color: theme.colors.primary }}>{trackingCode}</p>
           <button
             onClick={() => router.push('/tracking')}
-            className="mt-6 bg-white border border-black text-black font-bold py-2 px-6 rounded-full shadow-[2px_2px_0px_black] hover:bg-gray-100 transition"
+            style={{
+              backgroundColor: theme.colors.primary,
+              boxShadow: theme.shadows.button,
+            }}
+            className="mt-6 hover:opacity-90 text-white font-bold py-2 px-6 rounded-full"
           >
             الذهاب إلى صفحة التتبع
           </button>
-        </div>
-      </div>
+        </motion.div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cyan-50 p-4 sm:p-6">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-center text-blue-900 mb-8">Visa Application</h1>
-
-      {/* Progress Bar */}
-      <div className="flex justify-between mb-8 relative max-w-xl mx-auto">
-  {['المعلومات الشخصية', 'معلومات التأشيرة', 'الوثائق'].map((label, index) => {
-    const current = index + 1 === step;
-    const completed = index + 1 < step;
-    return (
-      <div
-        key={index}
-        className="flex-1 flex flex-col items-center relative z-10 transition-all duration-300 ease-in-out"
+    <main className="flex-1 min-h-screen" style={{ backgroundColor: theme.colors.background }}>
+      {/* Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{
+          backgroundColor: theme.colors.primary,
+          color: '#fff',
+        }}
+        className="relative text-center rounded-b-2xl shadow"
       >
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ease-in-out
-            ${current ? 'bg-blue-600 text-white scale-110 shadow-lg' :
-              completed ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-800'}`}
-        >
-          {index + 1}
+        <div className="p-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold">📝 تقديم طلب التأشيرة</h1>
+          <p className="mt-2" style={{ color: '#f0f0f0' }}>املأ البيانات المطلوبة بخطوات بسيطة.</p>
         </div>
-        <span
-          className={`mt-2 text-xs font-semibold transition-all duration-300 ${
-            current || completed ? 'text-gray-800' : 'text-gray-400'
-          }`}
-        >
-          {label}
-        </span>
-        {index < 2 && (
-          <div
-            className={`absolute top-5 left-1/2 w-full h-1 transform -translate-x-1/2 z-[-1] transition-all duration-300
-              ${step > index + 1
-                ? 'bg-gradient-to-r from-green-400 to-green-600'
-                : 'bg-gray-300'
-              }`}
-          ></div>
-        )}
-      </div>
-    );
-  })}
-</div>
+      </motion.div>
 
-      {/* Form Container */}
-      <form
-  onSubmit={handleSubmit}
-  className="bg-white/70 backdrop-blur-md border border-black/10 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] px-6 py-8 space-y-6 w-full max-w-lg mx-auto"
->
-      {step === 1 && (
-  <>
-    <input
-      type="text"
-      name="fullName"
-      value={formData.fullName}
-      onChange={handleInput}
-      placeholder="الاسم الكامل"
-      className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-      required
-    />
-    <input
-      type="email"
-      name="email"
-      value={formData.email}
-      onChange={handleInput}
-      placeholder="البريد الإلكتروني"
-      className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-      required
-    />
-    <select
-  name="countryOfOrigin"
-  value={formData.countryOfOrigin}
-  onChange={handleInput}
-  className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-  required
->
-  <option value="">اختر بلد الأصل</option>
-  <option value="Morocco">🇲🇦 المغرب</option>
-  <option value="Algeria">🇩🇿 الجزائر</option>
-  <option value="Tunisia">🇹🇳 تونس</option>
-  <option value="Egypt">🇪🇬 مصر</option>
-  <option value="Saudi Arabia">🇸🇦 السعودية</option>
-  <option value="France">🇫🇷 فرنسا</option>
-  <option value="Germany">🇩🇪 ألمانيا</option>
-  <option value="Spain">🇪🇸 إسبانيا</option>
-  <option value="Italy">🇮🇹 إيطاليا</option>
-  <option value="United States">🇺🇸 الولايات المتحدة</option>
-  <option value="United Kingdom">🇬🇧 المملكة المتحدة</option>
-  <option value="Canada">🇨🇦 كندا</option>
-  <option value="Turkey">🇹🇷 تركيا</option>
-  <option value="UAE">🇦🇪 الإمارات</option>
-  <option value="Qatar">🇶🇦 قطر</option>
-  <option value="Japan">🇯🇵 اليابان</option>
-  <option value="China">🇨🇳 الصين</option>
-  <option value="India">🇮🇳 الهند</option>
-  <option value="Brazil">🇧🇷 البرازيل</option>
-  <option value="South Africa">🇿🇦 جنوب أفريقيا</option>
-</select>
+      {/* Form Content */}
+      <motion.form
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        style={{
+          backgroundColor: '#fff',
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: theme.radius.lg,
+          boxShadow: theme.shadows.card,
+        }}
+        className="max-w-2xl mx-auto p-8 mt-6 space-y-6"
+      >
+        {/* Steps */}
+        <div className="flex justify-between mb-6">
+          {['المعلومات الشخصية', 'معلومات التأشيرة', 'الوثائق'].map((label, index) => {
+            const current = index + 1 === step;
+            const completed = index + 1 < step;
+            return (
+              <div key={index} className="flex flex-col items-center w-full relative">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0.5 }}
+                  animate={{
+                    scale: current ? 1.2 : 1,
+                    opacity: 1,
+                    backgroundColor: current
+                      ? theme.colors.primary
+                      : completed
+                      ? theme.colors.secondary
+                      : '#d1d5db',
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full font-bold text-white"
+                >
+                  {index + 1}
+                </motion.div>
 
-    <select
-  name="destinationCountry"
-  value={formData.destinationCountry}
-  onChange={handleInput}
-  className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-  required
->
-  <option value="">اختر بلد الوجهة</option>
-  <option value="Morocco">🇲🇦 المغرب</option>
-  <option value="Algeria">🇩🇿 الجزائر</option>
-  <option value="Tunisia">🇹🇳 تونس</option>
-  <option value="Egypt">🇪🇬 مصر</option>
-  <option value="Saudi Arabia">🇸🇦 السعودية</option>
-  <option value="France">🇫🇷 فرنسا</option>
-  <option value="Germany">🇩🇪 ألمانيا</option>
-  <option value="Spain">🇪🇸 إسبانيا</option>
-  <option value="Italy">🇮🇹 إيطاليا</option>
-  <option value="United States">🇺🇸 الولايات المتحدة</option>
-  <option value="United Kingdom">🇬🇧 المملكة المتحدة</option>
-  <option value="Canada">🇨🇦 كندا</option>
-  <option value="Turkey">🇹🇷 تركيا</option>
-  <option value="UAE">🇦🇪 الإمارات</option>
-  <option value="Qatar">🇶🇦 قطر</option>
-  <option value="Japan">🇯🇵 اليابان</option>
-  <option value="China">🇨🇳 الصين</option>
-  <option value="India">🇮🇳 الهند</option>
-  <option value="Brazil">🇧🇷 البرازيل</option>
-  <option value="South Africa">🇿🇦 جنوب أفريقيا</option>
-</select>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="mt-2 text-xs sm:text-sm"
+                  style={{ color: theme.colors.text }}
+                >
+                  {label}
+                </motion.p>
 
-  </>
-)}
-{step === 2 && (
-  <>
-    <input
-      type="text"
-      name="visaType"
-      value={formData.visaType}
-      onChange={handleInput}
-      placeholder="نوع التأشيرة"
-      className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-      required
-    />
-    <input
-      type="date"
-      name="travelDate"
-      value={formData.travelDate}
-      onChange={handleInput}
-      className="w-full p-2 border border-black rounded bg-white text-gray-800 placeholder:text-gray-500"
-      required
-    />
-  </>
-)}
+                {index < 2 && (
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: completed ? 1 : 0.5 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute top-5 left-full h-1 bg-gray-300"
+                    style={{ width: '100%' }}
+                  ></motion.div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-        {/* Step 3 */}
-        {step === 3 && (
-          <>
-            <UploadField label="جواز السفر" onUploaded={(url) => setFormData(prev => ({ ...prev, passportImage: url }))} />
-            <UploadField label="بطاقة الإقامة" onUploaded={(url) => setFormData(prev => ({ ...prev, residencePermit: url }))} />
-            <UploadField label="الصورة الشخصية" onUploaded={(url) => setFormData(prev => ({ ...prev, personalPhoto: url }))} />
-            <UploadField label="وثائق إضافية (اختياري)" onUploaded={(url) => setFormData(prev => ({ ...prev, additionalDocs: url }))} />
-          </>
-        )}
+        {/* Steps Content with Animation */}
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6"
+            >
+              <Field label="الاسم الكامل" name="fullName" value={formData.fullName} onChange={handleInput} icon={<UserIcon className="w-5 h-5" />} />
+              <Field label="البريد الإلكتروني" name="email" value={formData.email} onChange={handleInput} icon={<EnvelopeIcon className="w-5 h-5" />} />
+              <SelectField label="بلد الأصل" name="countryOfOrigin" value={formData.countryOfOrigin} onChange={handleInput} icon={<GlobeAltIcon className="w-5 h-5" />} />
+              <SelectField label="بلد الوجهة" name="destinationCountry" value={formData.destinationCountry} onChange={handleInput} icon={<MapIcon className="w-5 h-5" />} />
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6"
+            >
+              <SelectVisaType label="نوع التأشيرة" name="visaType" value={formData.visaType} onChange={handleInput} icon={<IdentificationIcon className="w-5 h-5" />} />
+              <Field label="تاريخ السفر" name="travelDate" type="date" value={formData.travelDate} onChange={handleInput} icon={<CalendarIcon className="w-5 h-5" />} />
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-6"
+            >
+              <StyledUploadField label="جواز السفر" onUploaded={(url) => setFormData(prev => ({ ...prev, passportImage: url }))} />
+              <StyledUploadField label="بطاقة الإقامة" onUploaded={(url) => setFormData(prev => ({ ...prev, residencePermit: url }))} />
+              <StyledUploadField label="الصورة الشخصية" onUploaded={(url) => setFormData(prev => ({ ...prev, personalPhoto: url }))} />
+              <StyledUploadField label="وثائق إضافية (اختياري)" onUploaded={(url) => setFormData(prev => ({ ...prev, additionalDocs: url }))} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Navigation */}
         <div className="flex justify-between pt-4 gap-4 flex-wrap">
@@ -260,7 +243,13 @@ export default function ApplyPage() {
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="bg-white border border-black text-black font-bold py-2 px-4 rounded shadow-[2px_2px_0px_black] hover:bg-gray-100 transition"
+              style={{
+                backgroundColor: '#fff',
+                border: `1px solid ${theme.colors.border}`,
+                color: theme.colors.text,
+                boxShadow: theme.shadows.button,
+              }}
+              className="font-bold py-2 px-4 rounded hover:opacity-90 transition"
             >
               رجوع
             </button>
@@ -269,20 +258,131 @@ export default function ApplyPage() {
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-[2px_2px_0px_black] hover:bg-blue-700 transition ml-auto"
+              style={{
+                backgroundColor: theme.colors.primary,
+                boxShadow: theme.shadows.button,
+              }}
+              className="text-white font-bold py-2 px-4 rounded hover:opacity-90 transition ml-auto"
             >
               التالي
             </button>
           ) : (
             <button
               type="submit"
-              className="bg-green-600 text-white font-bold py-2 px-4 rounded shadow-[2px_2px_0px_black] hover:bg-green-700 transition ml-auto"
+              style={{
+                backgroundColor: theme.colors.secondary,
+                boxShadow: theme.shadows.button,
+              }}
+              className="text-black font-bold py-2 px-4 rounded hover:opacity-90 transition ml-auto"
             >
               إرسال الطلب
             </button>
           )}
         </div>
-      </form>
-    </div>
+      </motion.form>
+    </main>
+  );
+}
+
+function Field({ label, name, value, onChange, type = 'text', icon }: any) {
+  return (
+    <motion.div whileHover={{ scale: 1.01 }} className="relative bg-white p-4 rounded-lg border hover:shadow-sm" style={{ borderColor: theme.colors.border }}>
+      <div className="absolute top-3 right-3 text-gray-500">{icon}</div>
+      <label className="font-medium text-sm mb-1 block" style={{ color: theme.colors.text }}>{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full mt-1 rounded p-2 focus:outline-none focus:ring"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
+      />
+    </motion.div>
+  );
+}
+
+function SelectField({ label, name, value, onChange, icon }: any) {
+  const options = [
+    { label: '🇲🇦 المغرب', value: 'Morocco' },
+    { label: '🇩🇿 الجزائر', value: 'Algeria' },
+    { label: '🇹🇳 تونس', value: 'Tunisia' },
+    { label: '🇪🇬 مصر', value: 'Egypt' },
+    { label: '🇸🇦 السعودية', value: 'Saudi Arabia' },
+    { label: '🇫🇷 فرنسا', value: 'France' },
+    { label: '🇩🇪 ألمانيا', value: 'Germany' },
+    { label: '🇪🇸 إسبانيا', value: 'Spain' },
+    { label: '🇮🇹 إيطاليا', value: 'Italy' },
+    { label: '🇺🇸 الولايات المتحدة', value: 'United States' },
+  ];
+
+  return (
+    <motion.div whileHover={{ scale: 1.01 }} className="relative bg-white p-4 rounded-lg border hover:shadow-sm" style={{ borderColor: theme.colors.border }}>
+      <div className="absolute top-3 right-3 text-gray-500">{icon}</div>
+      <label className="font-medium text-sm mb-1 block" style={{ color: theme.colors.text }}>{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full mt-1 rounded p-2 focus:outline-none focus:ring"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
+      >
+        <option value="">اختر</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </motion.div>
+  );
+}
+
+function SelectVisaType({ label, name, value, onChange, icon }: any) {
+  return (
+    <motion.div whileHover={{ scale: 1.01 }} className="relative bg-white p-4 rounded-lg border hover:shadow-sm" style={{ borderColor: theme.colors.border }}>
+      <div className="absolute top-3 right-3 text-gray-500">{icon}</div>
+      <label className="font-medium text-sm mb-1 block" style={{ color: theme.colors.text }}>{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full mt-1 rounded p-2 focus:outline-none focus:ring"
+        style={{
+          border: `1px solid ${theme.colors.border}`,
+          color: theme.colors.text,
+        }}
+      >
+        <option value="Tourism">تأشيرة سياحة</option>
+      </select>
+    </motion.div>
+  );
+}
+
+function StyledUploadField({ label, onUploaded }: { label: string; onUploaded: (url: string) => void }) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      className="relative bg-white p-4 rounded-lg border hover:shadow-sm"
+      style={{ borderColor: theme.colors.border }}
+    >
+      <label className="font-medium text-sm mb-2 block" style={{ color: theme.colors.text }}>
+        {label}
+      </label>
+      <UploadField
+        onUploaded={onUploaded}
+        buttonStyle={{
+          backgroundColor: theme.colors.primary,
+          color: '#fff',
+          boxShadow: theme.shadows.button,
+        }}
+        borderColor={theme.colors.border}
+      />
+    </motion.div>
   );
 }
