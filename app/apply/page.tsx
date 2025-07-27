@@ -44,7 +44,21 @@ export default function ApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // تم حذف التحقق من الحقول الإلزامية هنا
+    // ✅ التحقق من الحقول الإلزامية
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.countryOfOrigin ||
+      !formData.destinationCountry ||
+      !formData.visaType ||
+      !formData.travelDate ||
+      !formData.passportImage ||
+      !formData.residencePermit ||
+      !formData.personalPhoto
+    ) {
+      alert('يرجى تعبئة جميع الحقول الإلزامية ورفع الوثائق المطلوبة قبل الإرسال.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/apply', {
@@ -66,7 +80,7 @@ export default function ApplyPage() {
       }
     } catch (error) {
       console.error('Submit Error:', error);
-      alert('Something went wrong while submitting the form.');
+      alert('حدث خطأ أثناء إرسال الطلب.');
     }
   };
 
@@ -356,6 +370,7 @@ function SelectVisaType({ label, name, value, onChange, icon }: any) {
           color: theme.colors.text,
         }}
       >
+        <option value="">اختر نوع التأشيرة</option>
         <option value="Tourism">تأشيرة سياحة</option>
       </select>
     </motion.div>
