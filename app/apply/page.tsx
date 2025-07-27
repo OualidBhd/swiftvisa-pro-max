@@ -43,10 +43,8 @@ export default function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.passportImage || !formData.residencePermit || !formData.personalPhoto) {
-      alert('يرجى رفع جميع الوثائق الإلزامية قبل الإرسال.');
-      return;
-    }
+
+    // تم حذف التحقق من الحقول الإلزامية هنا
 
     try {
       const res = await fetch('/api/apply', {
