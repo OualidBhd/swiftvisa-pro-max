@@ -8,6 +8,14 @@ datasource db {
 }
 // Removed duplicate datasource definition to resolve the error.
 
+// ======= Enums =======
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+// ======= Model =======
 model visaApplication {
   id                 String            @id @default(cuid())
   fullName           String
@@ -20,11 +28,23 @@ model visaApplication {
   residencePermit    String
   personalPhoto      String
   additionalDocs     String?
-  trackingCode       String @unique
+  trackingCode       String            @unique
   createdAt          DateTime          @default(now()) @map("created_at")
   updatedAt          DateTime          @updatedAt
+  receiptEmailSentAt DateTime?
+
+  // حالة معالجة الطلب (عندك من قبل)
   status             ApplicationStatus @default(AWAITING_PAYMENT)
 
+  // ===== حقول الدفع (جديدة) =====
+  priceEUR           Decimal?          @db.Decimal(10, 2) // الثمن بالأورو
+  paymentStatus      PaymentStatus     @default(PENDING)  // حالة الدفع
+  paymentSessionId   String?                               // Stripe Checkout Session ID
+  paymentIntentId    String?                               // Stripe Payment Intent ID
+  currency           String?                                // مثال: "EUR"
+  amountPaid         Decimal?          @db.Decimal(10, 2)  // المبلغ المؤدى
+
+  @@index([paymentSessionId])
   @@map("applications")
 }
 

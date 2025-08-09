@@ -1,67 +1,109 @@
 // app/api/payment/route.ts
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { prisma } from '@/lib/prisma';
+import { ApplicationStatus, PaymentStatus } from '@prisma/client';
 
-export const runtime = 'nodejs'; // Stripe SDK كيحتاج Node
+export const runtime = 'nodejs';
 
-// إذا بغيتي تحدد نسخة الـ API دير السطر التالي وخلي التاريخ اللي فـ Dashboard ديالك:
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' });
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+// Stripe client مع apiVersion ثابت
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-06-20' as any,
+});
 
 export async function POST(req: Request) {
   try {
-    const { amount, trackingCode } = await req.json();
+    const { trackingCode } = await req.json();
 
-    // تحقق من المبلغ
-    const cents = Math.round(Number(amount) * 100);
-    if (!Number.isFinite(cents) || cents < 50) {
-      return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
+    if (!trackingCode) {
+      return NextResponse.json(
+        { success: false, errorMessage: 'Missing trackingCode' },
+        { status: 400 }
+      );
     }
 
-    // حدّد base URL بطريقة مرِنة: env -> Origin -> Referer -> localhost
-    const envBase = process.env.NEXT_PUBLIC_APP_URL?.trim();
-    let base: string | undefined =
-      envBase && envBase.startsWith('http') ? envBase : undefined;
+    // جيب الطلب والسعر من الـ DB
+    const app = await prisma.visaApplication.findUnique({
+      where: { trackingCode },
+      select: { priceEUR: true, paymentStatus: true, status: true },
+    });
 
+    if (!app || app.priceEUR == null) {
+      return NextResponse.json(
+        { success: false, errorMessage: 'Invalid tracking code or price' },
+        { status: 404 }
+      );
+    }
+
+    // منع إنشاء جلسة إذا الطلب مدفوع أو ماشي فـ AWAITING_PAYMENT
+    const notEligible =
+      app.paymentStatus === PaymentStatus.PAID ||
+      app.status !== ApplicationStatus.AWAITING_PAYMENT;
+
+    if (notEligible) {
+      return NextResponse.json(
+        { success: false, errorMessage: 'Already paid or not eligible' },
+        { status: 400 }
+      );
+    }
+
+    const cents = Math.round(Number(app.priceEUR) * 100);
+    if (!Number.isFinite(cents) || cents < 50) {
+      return NextResponse.json(
+        { success: false, errorMessage: 'Invalid server price (< €0.50)' },
+        { status: 400 }
+      );
+    }
+
+    // حدّد base URL
+    const envBase = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    let base: string | undefined = envBase?.startsWith('http') ? envBase : undefined;
     if (!base) {
       const origin = req.headers.get('origin') || '';
       if (origin.startsWith('http')) base = origin;
     }
     if (!base) {
       const referer = req.headers.get('referer') || '';
-      try {
-        if (referer) base = new URL(referer).origin;
-      } catch {
-        /* ignore */
-      }
+      try { if (referer) base = new URL(referer).origin; } catch {}
     }
     if (!base) base = 'http://localhost:3000';
 
-    const successUrl = new URL('/payment-success', base).toString();
+    const successUrl = new URL('/payment-success?session_id={CHECKOUT_SESSION_ID}', base).toString();
     const cancelUrl  = new URL('/payment-failed', base).toString();
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      // هاد الحقل ما بقاش ضروري فالإصدارات الجديدة ولكن ما يضرّش
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: { name: `Visa Application (${trackingCode || 'N/A'})` },
-            unit_amount: cents,
+    // إنشاء جلسة Stripe (بالأورو)
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        line_items: [
+          {
+            price_data: {
+              currency: 'eur',
+              product_data: { name: `Visa Application (${trackingCode})` },
+              unit_amount: cents,
+            },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: { trackingCode: trackingCode || '' },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: { trackingCode },
+      },
+      { idempotencyKey: `checkout-${trackingCode}` } // حماية من الدبل كليك
+    );
+
+    // خزن الـ session.id باش الويبهوك يقدر يعمل fallback
+    await prisma.visaApplication.update({
+      where: { trackingCode },
+      data: { paymentSessionId: session.id },
     });
 
-    return NextResponse.json({ success: true, url: session.url });
-  } catch (err) {
-    console.error('❌ Stripe error:', err);
-    return NextResponse.json({ success: false, error: 'Stripe session failed' }, { status: 500 });
+    return NextResponse.json({ success: true, id: session.id, url: session.url });
+  } catch (err: any) {
+    console.error('❌ Create session error:', err?.message || err);
+    return NextResponse.json(
+      { success: false, errorMessage: 'Stripe session failed' },
+      { status: 500 }
+    );
   }
 }

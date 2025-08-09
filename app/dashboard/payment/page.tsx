@@ -7,22 +7,31 @@ import {
   CurrencyDollarIcon,
   IdentificationIcon,
 } from '@heroicons/react/24/outline';
-import { loadStripe } from '@stripe/stripe-js';          // ⬅️ جديد
+import { loadStripe } from '@stripe/stripe-js';
 import { theme } from '@/lib/theme';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK!); // ⬅️ جديد
+let stripePromise: ReturnType<typeof loadStripe> | null = null;
+function getStripe() {
+  const pk = process.env.NEXT_PUBLIC_STRIPE_PK;
+  if (!pk) {
+    console.error('❌ Missing NEXT_PUBLIC_STRIPE_PK');
+    return null;
+  }
+  if (!stripePromise) stripePromise = loadStripe(pk);
+  return stripePromise;
+}
 
 interface PaymentData {
   trackingCode: string;
   visaType: string;
-  amount: number;
+  amount: number; // بالأورو
   status: 'PENDING' | 'PAID' | 'FAILED';
 }
 
 export default function PaymentPage() {
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [paying, setPaying] = useState(false);           // ⬅️ (اختياري) لحظر الزر أثناء التحويل
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('trackedApplication');
@@ -31,7 +40,7 @@ export default function PaymentPage() {
       setPaymentData({
         trackingCode: parsed.trackingCode,
         visaType: parsed.visaType,
-        amount: 0.99,           // تقدر تجيبها لاحقاً من API
+        amount: 0.99, // € — تقدر تجيبها لاحقاً من API حسب نوع التأشيرة
         status: 'PENDING',
       });
     }
@@ -40,6 +49,12 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (!paymentData) return;
+    const stripe = await getStripe();
+    if (!stripe) {
+      alert('إعداد Stripe ناقص: ضيف NEXT_PUBLIC_STRIPE_PK ثم أعد التشغيل.');
+      return;
+    }
+
     try {
       setPaying(true);
 
@@ -48,22 +63,20 @@ export default function PaymentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trackingCode: paymentData.trackingCode,
-          amount: Number(paymentData.amount), // ⬅️ مهم بزاف
+          amount: Number(paymentData.amount), // مهم: بالأورو
         }),
       });
 
       const data = await res.json();
 
-      // نفضّلو redirectToCheckout ب sessionId (أأمن)
+      // الطريقة الموصى بها: sessionId
       if (res.ok && data?.success && data?.id) {
-        const stripe = await stripePromise;
-        if (!stripe) throw new Error('Stripe not loaded');
         const result = await stripe.redirectToCheckout({ sessionId: data.id });
         if (result.error) alert(result.error.message || 'تعذر التحويل إلى صفحة الدفع');
         return;
       }
 
-      // دعم الخلفية القديمة اللي كتردّ url مباشرة
+      // دعم fallback إن رجّع الـ API url
       if (res.ok && data?.success && data?.url) {
         window.location.href = data.url;
         return;
@@ -80,7 +93,10 @@ export default function PaymentPage() {
 
   if (loading) {
     return (
-      <main className="flex items-center justify-center min-h-screen" style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
+      <main
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}
+      >
         <CreditCardIcon className="w-8 h-8 animate-spin" style={{ color: theme.colors.primary }} />
         <span className="ml-2 text-sm" style={{ color: theme.colors.text }}>
           جارٍ تحميل بيانات الدفع...
@@ -90,7 +106,10 @@ export default function PaymentPage() {
   }
 
   return (
-    <main className="flex-1 min-h-screen" style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
+    <main
+      className="flex-1 min-h-screen"
+      style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}
+    >
       {/* Banner */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
@@ -105,7 +124,9 @@ export default function PaymentPage() {
       >
         <div className="relative p-8 text-center">
           <h1 className="text-4xl font-extrabold">💳 الدفع</h1>
-          <p className="mt-2" style={{ color: '#f1f5f9' }}>مراجعة حالة الدفع الخاصة بطلبك.</p>
+          <p className="mt-2" style={{ color: '#f1f5f9' }}>
+            مراجعة حالة الدفع الخاصة بطلبك.
+          </p>
         </div>
       </motion.div>
 
@@ -135,7 +156,7 @@ export default function PaymentPage() {
             />
             <PaymentField
               label="المبلغ"
-              value={`€${paymentData.amount}`}
+              value={`€${paymentData.amount.toFixed(2)}`}
               icon={<CurrencyDollarIcon className="w-5 h-5" />}
             />
             <PaymentStatus status={paymentData.status} />
@@ -171,7 +192,15 @@ export default function PaymentPage() {
   );
 }
 
-function PaymentField({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
+function PaymentField({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+}) {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -208,11 +237,8 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
 }
 
 function PaymentStatus({ status }: { status: 'PENDING' | 'PAID' | 'FAILED' }) {
-  const bgColor =
-    status === 'PAID' ? '#BBF7D0' : status === 'FAILED' ? '#FCA5A5' : '#FDE68A';
-
-  const text =
-    status === 'PAID' ? 'تم الدفع بنجاح' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
+  const bgColor = status === 'PAID' ? '#BBF7D0' : status === 'FAILED' ? '#FCA5A5' : '#FDE68A';
+  const text = status === 'PAID' ? 'تم الدفع بنجاح' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
 
   return (
     <p
