@@ -7,7 +7,10 @@ import {
   CurrencyDollarIcon,
   IdentificationIcon,
 } from '@heroicons/react/24/outline';
+import { loadStripe } from '@stripe/stripe-js';          // ⬅️ جديد
 import { theme } from '@/lib/theme';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK!); // ⬅️ جديد
 
 interface PaymentData {
   trackingCode: string;
@@ -19,41 +22,59 @@ interface PaymentData {
 export default function PaymentPage() {
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);           // ⬅️ (اختياري) لحظر الزر أثناء التحويل
 
   useEffect(() => {
     const stored = localStorage.getItem('trackedApplication');
     if (stored) {
       const parsed = JSON.parse(stored);
-
-      // ⚠️ هنا مستقبلاً نجيب البيانات من API
       setPaymentData({
         trackingCode: parsed.trackingCode,
         visaType: parsed.visaType,
-        amount: 99.99,
-        status: 'PENDING', // أو 'PAID' حسب الحالة
+        amount: 0.99,           // تقدر تجيبها لاحقاً من API
+        status: 'PENDING',
       });
     }
     setLoading(false);
   }, []);
 
   const handlePayment = async () => {
+    if (!paymentData) return;
     try {
+      setPaying(true);
+
       const res = await fetch('/api/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackingCode: paymentData?.trackingCode }),
+        body: JSON.stringify({
+          trackingCode: paymentData.trackingCode,
+          amount: Number(paymentData.amount), // ⬅️ مهم بزاف
+        }),
       });
 
       const data = await res.json();
 
-      if (data.url) {
-        window.location.href = data.url; // تحويل مباشر إلى Stripe Checkout
-      } else {
-        alert('تعذر بدء عملية الدفع، جرب مرة أخرى.');
+      // نفضّلو redirectToCheckout ب sessionId (أأمن)
+      if (res.ok && data?.success && data?.id) {
+        const stripe = await stripePromise;
+        if (!stripe) throw new Error('Stripe not loaded');
+        const result = await stripe.redirectToCheckout({ sessionId: data.id });
+        if (result.error) alert(result.error.message || 'تعذر التحويل إلى صفحة الدفع');
+        return;
       }
-    } catch (err) {
+
+      // دعم الخلفية القديمة اللي كتردّ url مباشرة
+      if (res.ok && data?.success && data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      alert(data?.errorMessage || 'تعذر بدء عملية الدفع، جرب مرة أخرى.');
+    } catch (err: any) {
       console.error('خطأ أثناء الدفع:', err);
-      alert('حدث خطأ أثناء محاولة الدفع.');
+      alert(err?.message || 'حدث خطأ أثناء محاولة الدفع.');
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -114,7 +135,7 @@ export default function PaymentPage() {
             />
             <PaymentField
               label="المبلغ"
-              value={`$${paymentData.amount}`}
+              value={`€${paymentData.amount}`}
               icon={<CurrencyDollarIcon className="w-5 h-5" />}
             />
             <PaymentStatus status={paymentData.status} />
@@ -123,14 +144,15 @@ export default function PaymentPage() {
               {paymentData.status === 'PENDING' ? (
                 <button
                   onClick={handlePayment}
-                  className="px-6 py-3 rounded-full shadow hover:opacity-90 transition font-bold"
+                  disabled={paying}
+                  className="px-6 py-3 rounded-full shadow hover:opacity-90 transition font-bold disabled:opacity-60"
                   style={{
                     backgroundColor: theme.colors.secondary,
                     color: '#000',
                     boxShadow: theme.shadows.button,
                   }}
                 >
-                  الدفع الآن
+                  {paying ? 'جارٍ التحويل…' : 'الدفع الآن'}
                 </button>
               ) : (
                 <p style={{ color: theme.colors.primary }} className="font-bold text-lg">
@@ -164,7 +186,7 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
         className="absolute top-3 right-3 p-1 rounded-full flex items-center justify-center"
         style={{
           backgroundColor: '#fff',
-          border: `1px solid ${theme.colors.border}`, // الكونتور الكحل
+          border: `1px solid ${theme.colors.border}`,
           color: theme.colors.text,
           width: '32px',
           height: '32px',
@@ -187,27 +209,15 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
 
 function PaymentStatus({ status }: { status: 'PENDING' | 'PAID' | 'FAILED' }) {
   const bgColor =
-    status === 'PAID'
-      ? '#BBF7D0'
-      : status === 'FAILED'
-      ? '#FCA5A5'
-      : '#FDE68A';
+    status === 'PAID' ? '#BBF7D0' : status === 'FAILED' ? '#FCA5A5' : '#FDE68A';
 
   const text =
-    status === 'PAID'
-      ? 'تم الدفع بنجاح'
-      : status === 'FAILED'
-      ? 'فشل الدفع'
-      : 'قيد الدفع';
+    status === 'PAID' ? 'تم الدفع بنجاح' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
 
   return (
     <p
       className="font-bold text-lg px-4 py-2 rounded-lg border-2"
-      style={{
-        backgroundColor: bgColor,
-        borderColor: theme.colors.border,
-        color: theme.colors.text,
-      }}
+      style={{ backgroundColor: bgColor, borderColor: theme.colors.border, color: theme.colors.text }}
     >
       {text}
     </p>
