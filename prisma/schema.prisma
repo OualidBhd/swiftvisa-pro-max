@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ===== Enums =====
 enum PaymentStatus {
   PENDING
   PAID
@@ -25,6 +27,7 @@ enum Role {
   ADMIN
 }
 
+// ===== Models =====
 model visaApplication {
   id                 String            @id @default(cuid())
   fullName           String
@@ -42,7 +45,10 @@ model visaApplication {
   updatedAt          DateTime          @updatedAt
   receiptEmailSentAt DateTime?
 
+  // حالة معالجة الطلب
   status             ApplicationStatus @default(AWAITING_PAYMENT)
+
+  // ===== الدفع =====
   priceEUR           Decimal           @db.Decimal(10, 2) @default(0.99)
   paymentStatus      PaymentStatus     @default(PENDING)
   paymentSessionId   String?

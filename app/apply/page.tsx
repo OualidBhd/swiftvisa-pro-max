@@ -43,7 +43,7 @@ export default function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // ✅ التحقق من الحقول الإلزامية
     if (
       !formData.fullName ||
@@ -59,25 +59,35 @@ export default function ApplyPage() {
       alert('يرجى تعبئة جميع الحقول الإلزامية ورفع الوثائق المطلوبة قبل الإرسال.');
       return;
     }
-
+  
     try {
       const res = await fetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
+  
       const result = await res.json();
-
-      if (result.success) {
-        const code = result.visaApplication.trackingCode;
-        setTrackingCode(code);
-        setSuccess(true);
-        localStorage.setItem('tracking_email', formData.email);
-        localStorage.setItem('tracking_code', code);
-      } else {
-        alert('Error: ' + result.error);
+  
+      if (!res.ok || !result?.success) {
+        console.error('Apply API error:', result);
+        alert(result?.error ?? 'حدث خطأ أثناء إرسال الطلب.');
+        return;
       }
+  
+      // ✅ خذ الكود من أي مفتاح متاح
+      const code = result?.visaApplication?.trackingCode ?? result?.trackingCode;
+  
+      if (!code) {
+        console.error('Unexpected apply payload:', result);
+        alert('تم تقديم الطلب لكن لم يتم استلام رمز التتبع.');
+        return;
+      }
+  
+      setTrackingCode(code);
+      setSuccess(true);
+      localStorage.setItem('tracking_email', formData.email);
+      localStorage.setItem('tracking_code', code);
     } catch (error) {
       console.error('Submit Error:', error);
       alert('حدث خطأ أثناء إرسال الطلب.');
