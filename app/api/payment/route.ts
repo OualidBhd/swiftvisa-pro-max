@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       const referer = req.headers.get('referer') || '';
       try { if (referer) base = new URL(referer).origin; } catch {}
     }
-    if (!base) base = 'http://localhost:3000';
+    if (!base) base = 'https://swiftvisaonline.com';
 
     const successUrl = new URL('/payment-success?session_id={CHECKOUT_SESSION_ID}', base).toString();
     const cancelUrl  = new URL('/payment-failed', base).toString();
