@@ -67,8 +67,8 @@ export async function POST(req: Request) {
       try { if (referer) base = new URL(referer).origin; } catch {}
     }
     if (!base) base = process.env.NODE_ENV === 'production'
-? 'https://swiftvisaonline.com'
-: 'http://localhost:3000';
+    ? 'https://swiftvisaonline.com'
+    : 'http://localhost:3000';
 
     const successUrl = new URL('/payment-success?session_id={CHECKOUT_SESSION_ID}', base).toString();
     const cancelUrl  = new URL('/payment-failed', base).toString();
