@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import type { ApplicationStatus, PaymentStatus } from '@prisma/client';
-import { sendEmail } from '@/lib/sendEmail'; // ← دالتك
+import { sendPaymentEmail } from '@/lib/sendPaymentEmail'; // دالة جديدة خاصة بإيميل الدفع
 
 export const runtime = 'nodejs';
 
@@ -50,17 +50,16 @@ export async function POST(req: Request) {
           },
         });
 
-        // 2) إرسال إيميل إذا مازال ما تبعثش
-        if (!app.receiptEmailSentAt && app.email) {
+        // 2) إرسال إيميل تأكيد الدفع إذا مازال ما تبعثش
+        if (!app.receiptEmailSentAt && app.email && amount) {
           try {
-            await sendEmail(app.email, app.trackingCode);
-
+            await sendPaymentEmail(app.email, app.trackingCode, amount, currency);
             await prisma.visaApplication.update({
               where: { trackingCode },
               data: { receiptEmailSentAt: new Date() },
             });
           } catch (mailErr) {
-            console.error('✉️ sendEmail error:', mailErr);
+            console.error('✉️ sendPaymentEmail error:', mailErr);
           }
         }
       }
