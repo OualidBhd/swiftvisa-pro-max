@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/sendEmail';
 import { ApplicationStatus, Prisma } from '@prisma/client';
 
-const generateTrackingCode = (): string => {
+const PRICE_EUR = Number(process.env.PRICE_EUR ?? '0.99');
+
+const generateTrackingCode = () => {
   const part = Math.random().toString(36).substring(2, 8).toUpperCase();
   const date = Date.now().toString(36).toUpperCase();
   return `${part}-${date}`;
@@ -14,6 +16,12 @@ async function createApplicationWithUniqueCode(body: any) {
   while (attempts < 3) {
     const trackingCode = generateTrackingCode();
     try {
+      const travelDate =
+        body.travelDate ? new Date(body.travelDate) : null;
+      if (travelDate && isNaN(+travelDate)) {
+        throw new Error('Invalid travelDate');
+      }
+
       const created = await prisma.visaApplication.create({
         data: {
           fullName: body.fullName || '',
@@ -21,18 +29,14 @@ async function createApplicationWithUniqueCode(body: any) {
           countryOfOrigin: body.countryOfOrigin || '',
           destinationCountry: body.destinationCountry || '',
           visaType: body.visaType || '',
-          travelDate: body.travelDate ? new Date(body.travelDate) : null,
+          travelDate,
           passportImage: body.passportImage || '',
           residencePermit: body.residencePermit || '',
           personalPhoto: body.personalPhoto || '',
           additionalDocs: body.additionalDocs || '',
           trackingCode,
           status: ApplicationStatus.AWAITING_PAYMENT,
-
-          // حقول الدفع:
-          priceEUR: new Prisma.Decimal('0.99'), // نخليها كنص باش نتفادو مشاكل الفاصلة
-          // paymentStatus: PENDING (default فالـ schema)
-          // الباقي (paymentSessionId/amountPaid/...) كيتعمر لاحقاً من الويبهوك
+          priceEUR: new Prisma.Decimal(PRICE_EUR.toFixed(2)),
         },
         select: {
           id: true,
@@ -40,14 +44,12 @@ async function createApplicationWithUniqueCode(body: any) {
           fullName: true,
           email: true,
           status: true,
-          priceEUR: true,
           createdAt: true,
         },
       });
 
-      return created; // نجحات
+      return created;
     } catch (e: any) {
-      // إعادة المحاولة إذا تصادم trackingCode (P2002)
       if (e?.code === 'P2002' && e?.meta?.target?.includes('trackingCode')) {
         attempts += 1;
         continue;
@@ -71,13 +73,21 @@ export async function POST(req: NextRequest) {
 
     const created = await createApplicationWithUniqueCode(body);
 
-    // إيميل الترحيب + كود التتبع
-    await sendEmail(created.email, created.trackingCode);
+    // 📨 خليه غير محاولة، ما يطيّحش الـ API إذا فشل
+    (async () => {
+      try {
+        await sendEmail(created.email, created.trackingCode);
+      } catch (err) {
+        console.error('sendEmail (apply) failed:', err);
+      }
+    })();
 
     return NextResponse.json({
       success: true,
       trackingCode: created.trackingCode,
-      visaApplication: created,
+      // نرجع غير اللي نحتاجوه
+      applicant: { fullName: created.fullName, email: created.email },
+      status: created.status,
     });
   } catch (err: any) {
     console.error('❌ Error in /apply:', err);
