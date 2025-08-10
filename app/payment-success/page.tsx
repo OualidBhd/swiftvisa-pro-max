@@ -1,12 +1,21 @@
-'use client';
+// app/payment-success/page.tsx (أو route handler)
+'use client'
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-import { Suspense } from 'react';
-import PaymentSuccessContent from './payment-success-content';
+export default function PaymentSuccess() {
+  const sp = useSearchParams();
+  const sid = sp.get('session_id');
+  const [done, setDone] = useState(false);
 
-export default function PaymentSuccessPage() {
-  return (
-    <Suspense fallback={<main className="max-w-xl mx-auto p-6">Loading…</main>}>
-      <PaymentSuccessContent />
-    </Suspense>
-  );
+  useEffect(() => {
+    if (!sid) return;
+    (async () => {
+      await fetch(`/api/payment/verify?session_id=${encodeURIComponent(sid)}`);
+      setDone(true);
+    })();
+  }, [sid]);
+
+  // من بعد، ريفري لواجهة التتبع أو جيب الحالة الحالية
+  // ...
 }
