@@ -7,18 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Removed duplicate datasource definition to resolve the error.
-
-// ======= Enums =======
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
 }
 
-// ======= Model =======
+enum ApplicationStatus {
+  AWAITING_PAYMENT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
 model visaApplication {
-  id                 String    @id @default(cuid())
+  id                 String            @id @default(cuid())
   fullName           String
   email              String
   countryOfOrigin    String
@@ -29,35 +37,32 @@ model visaApplication {
   residencePermit    String
   personalPhoto      String
   additionalDocs     String?
-  trackingCode       String    @unique
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt
+  trackingCode       String            @unique
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt
   receiptEmailSentAt DateTime?
 
-  // حالة معالجة الطلب (عندك من قبل)
-  status ApplicationStatus @default(AWAITING_PAYMENT)
-
-  // ===== حقول الدفع (جديدة) =====
-  priceEUR         Decimal?      @db.Decimal(10, 2) // الثمن بالأورو
-  paymentStatus    PaymentStatus @default(PENDING) // حالة الدفع
-  paymentSessionId String? // Stripe Checkout Session ID
-  paymentIntentId  String? // Stripe Payment Intent ID
-  currency         String? // مثال: "EUR"
-  amountPaid       Decimal?      @db.Decimal(10, 2) // المبلغ المؤدى
+  status             ApplicationStatus @default(AWAITING_PAYMENT)
+  priceEUR           Decimal           @db.Decimal(10, 2) @default(0.99)
+  paymentStatus      PaymentStatus     @default(PENDING)
+  paymentSessionId   String?
+  paymentIntentId    String?
+  currency           String?           @default("EUR")
+  amountPaid         Decimal?          @db.Decimal(10, 2)
 
   @@index([paymentSessionId])
   @@map("applications")
 }
 
 model AppUser {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String        @unique
   emailVerified DateTime?
   image         String?
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role          @default(USER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   accounts      Account[]
   sessions      Session[]
 
@@ -93,18 +98,6 @@ model Session {
   user         AppUser  @relation(fields: [userId], references: [id])
 
   @@map("sessions")
-}
-
-enum Role {
-  USER
-  ADMIN
-}
-
-enum ApplicationStatus {
-  AWAITING_PAYMENT
-  PENDING
-  APPROVED
-  REJECTED
 }
 
 model SupportTicket {
