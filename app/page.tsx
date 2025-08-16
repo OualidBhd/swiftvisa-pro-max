@@ -276,7 +276,7 @@ export default function Home() {
             className="underline"
             style={{ color: theme.colors.primary }}
           >
-            support@swiftvisaonline.com
+            contact@swiftvisaonline.com
           </a>
         </p>
       </footer>

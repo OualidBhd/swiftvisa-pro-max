@@ -189,12 +189,12 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
   );
 }
 
-function PaymentStatus({ status }: { status: PaymentStatus }) {
+function PaymentStatus({ status }: { status: 'PENDING'|'PAID'|'FAILED' }) {
   const bg = status === 'PAID' ? '#BBF7D0' : status === 'FAILED' ? '#FCA5A5' : '#FDE68A';
-  const text = status === 'PAID' ? 'تم الدفع بنجاح' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
+  const text = status === 'PAID' ? 'تم الدفع' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
   return (
     <p className="font-bold text-lg px-4 py-2 rounded-lg border-2"
-       style={{ backgroundColor: bg, borderColor: theme.colors.border, color: theme.colors.text }}>
+       style={{ backgroundColor: bg, borderColor: theme.colors.border }}>
       {text}
     </p>
   );

@@ -1,10 +1,14 @@
+// components/AnalyticsTracker.tsx
 'use client';
-import { useEffect } from "react";
+
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function AnalyticsTracker() {
-  useEffect(() => {
-    console.log("Vercel Analytics check: page loaded");
-  }, []);
-
-  return null;
+  return (
+    <>
+      <Analytics />       {/* كيتكلف بتتبع الزيارات و الـ bounce rate */}
+      <SpeedInsights />   {/* اختياري: كيعطيك أداء السرعة */}
+    </>
+  );
 }
