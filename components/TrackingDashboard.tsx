@@ -17,17 +17,35 @@ type Application = {
 };
 
 export default function TrackingDashboard() {
-  const [appData, setAppData] = useState<Application | null>(null);
-  const [loadingInitial, setLoadingInitial] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const trackingCode = searchParams.get('code');
+  const [code, setCode] = useState<string | null>(null);
+  const [app, setApp] = useState<Application | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function fetchApplication(code: string): Promise<Application> {
-    const res = await fetch('/api/tracking?ts=' + Date.now(), {
+  // استخرج الكود بشكل موثوق + fallback من localStorage
+  useEffect(() => {
+    const urlCode = searchParams.get('code');
+    if (urlCode) {
+      setCode(urlCode);
+      return;
+    }
+    // fallback: إذا رجعنا من success بسرعة قبل ما يتكتب الكود فـ URL
+    const ls = typeof window !== 'undefined' ? localStorage.getItem('tracking_code') : null;
+    if (ls) {
+      setCode(ls);
+      // صحح العنوان باش مستقبلًا كلشي يعتمد على URL
+      router.replace(`/dashboard?code=${encodeURIComponent(ls)}&ts=${Date.now()}`);
+    } else {
+      setCode(null);
+    }
+  }, [searchParams, router]);
+
+  async function fetchApp(trackingCode: string) {
+    const res = await fetch(`/api/tracking?ts=${Date.now()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-      body: JSON.stringify({ trackingCode: code }),
+      body: JSON.stringify({ trackingCode }),
       cache: 'no-store',
     });
     const data = await res.json();
@@ -35,80 +53,38 @@ export default function TrackingDashboard() {
     return data.application as Application;
   }
 
+  // اجلب التطبيق + retry صغير
   useEffect(() => {
-    if (!trackingCode) return;
-
-    let stop = false;
-    let timer: number | undefined;
-    let tries = 0;
-    const MAX_TRIES = 24;       // ~2 دقائق
-    const INTERVAL_MS = 5000;   // كل 5 ثواني
-
+    if (!code) { setLoading(false); return; }
+    let alive = true;
     (async () => {
+      setLoading(true);
       try {
-        // 1) جلب أولي
-        const firstApp = await fetchApplication(trackingCode);
-        setAppData(firstApp);
-        localStorage.setItem('trackedApplication', JSON.stringify(firstApp));
-        setLoadingInitial(false);
-
-        // 2) نقرّر من الآن واش نبدأ البولّينغ
-        const shouldPoll = firstApp.status === 'AWAITING_PAYMENT';
-
-        const poll = async () => {
-          if (stop || document.visibilityState !== 'visible') return;
+        let attempt = 0, lastErr: any = null;
+        while (attempt < 3) {
           try {
-            const latest = await fetchApplication(trackingCode);
-            // كنحدّث غير الستاتوس/حالة الدفع باش ما يطّفاش UI
-            setAppData(prev =>
-              prev ? { ...prev, status: latest.status, paymentStatus: latest.paymentStatus } : latest
-            );
-
-            // حبّس ملي تخرج من انتظار الدفع
-            if (latest.status !== 'AWAITING_PAYMENT') {
-              stop = true;
-              return;
-            }
-
-            tries++;
-            if (tries < MAX_TRIES) timer = window.setTimeout(poll, INTERVAL_MS);
-          } catch {
-            // نخليها ساكتة؛ محاولة أخرى فالدورة الجاية
+            const a = await fetchApp(code);
+            if (!alive) return;
+            setApp(a);
+            localStorage.setItem('trackedApplication', JSON.stringify(a));
+            setLoading(false);
+            return;
+          } catch (e) {
+            lastErr = e;
+            attempt += 1;
+            await new Promise(r => setTimeout(r, 300));
           }
-        };
-
-        if (shouldPoll) {
-          timer = window.setTimeout(poll, INTERVAL_MS);
         }
+        throw lastErr ?? new Error('fetch failed');
       } catch {
-        router.push('/tracking?error=notfound');
+        setApp(null);
+        setLoading(false);
       }
     })();
+    return () => { alive = false; };
+  }, [code]);
 
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        setTimeout(async () => {
-          try {
-            const latest = await fetchApplication(trackingCode);
-            setAppData(prev =>
-              prev ? { ...prev, status: latest.status, paymentStatus: latest.paymentStatus } : latest
-            );
-          } catch {}
-        }, 300);
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
-    return () => {
-      stop = true;
-      if (timer) clearTimeout(timer);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [trackingCode, router]);
-
-  if (!trackingCode) return null;
-
-  if (loadingInitial) {
+  if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen"
         style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
@@ -118,45 +94,51 @@ export default function TrackingDashboard() {
     );
   }
 
+  if (!code || !app) {
+    return (
+      <main className="flex items-center justify-center min-h-screen"
+        style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
+        <div className="text-center">
+          <p className="mb-3">ما لقيناش طلب مرتبط بهذا الرابط.</p>
+          <a href="/tracking" className="underline">الرجوع لصفحة التتبع</a>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex-1 min-h-screen"
       style={{ background: `linear-gradient(to bottom right, ${theme.colors.background}, #f8f9fa)` }}>
-      {/* Banner */}
       <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="relative rounded-b-3xl shadow-lg"
         style={{ backgroundColor: theme.colors.primary, color: '#fff', borderBottom: `2px solid ${theme.colors.border}` }}>
         <div className="relative p-8 text-center">
-          <h1 className="text-4xl font-extrabold">{appData?.fullName || 'المستخدم'}</h1>
+          <h1 className="text-4xl font-extrabold">{app.fullName || 'المستخدم'}</h1>
           <p className="mt-2" style={{ color: '#f1f5f9' }}>تتبع حالة طلبك بسهولة واطلع على جميع التفاصيل.</p>
         </div>
       </motion.div>
 
-      {/* Content */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: 0.2 }}
         className="max-w-4xl mx-auto rounded-2xl p-8 mt-6 space-y-8"
         style={{ backgroundColor: '#fff', border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadows.card }}>
-        {appData ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-            <Info label="الاسم الكامل" value={appData.fullName} icon={<UserIcon className="w-5 h-5" />} />
-            <Info label="البريد الإلكتروني" value={appData.email} icon={<EnvelopeIcon className="w-5 h-5" />} />
-            <Info label="بلد الأصل" value={appData.countryOfOrigin} icon={<GlobeAltIcon className="w-5 h-5" />} />
-            <Info label="الوجهة" value={appData.destinationCountry} icon={<MapIcon className="w-5 h-5" />} />
-            <Info label="نوع التأشيرة" value={appData.visaType} icon={<IdentificationIcon className="w-5 h-5" />} />
-            <Info label="تاريخ السفر" value={new Date(appData.travelDate).toLocaleDateString()} icon={<CalendarIcon className="w-5 h-5" />} />
-            <Info label="رقم التتبع" value={appData.trackingCode} icon={<HashtagIcon className="w-5 h-5" />} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+          <Info label="الاسم الكامل" value={app.fullName} icon={<UserIcon className="w-5 h-5" />} />
+          <Info label="البريد الإلكتروني" value={app.email} icon={<EnvelopeIcon className="w-5 h-5" />} />
+          <Info label="بلد الأصل" value={app.countryOfOrigin} icon={<GlobeAltIcon className="w-5 h-5" />} />
+          <Info label="الوجهة" value={app.destinationCountry} icon={<MapIcon className="w-5 h-5" />} />
+          <Info label="نوع التأشيرة" value={app.visaType} icon={<IdentificationIcon className="w-5 h-5" />} />
+          <Info label="تاريخ السفر" value={new Date(app.travelDate).toLocaleDateString()} icon={<CalendarIcon className="w-5 h-5" />} />
+          <Info label="رقم التتبع" value={app.trackingCode} icon={<HashtagIcon className="w-5 h-5" />} />
 
-            <motion.div whileHover={{ scale: 1.02 }} className="sm:col-span-2 rounded-lg p-4 text-center"
-              style={{ backgroundColor: theme.colors.background, border: `1px solid ${theme.colors.border}` }}>
-              <p className="font-medium mb-1" style={{ color: theme.colors.text }}>حالة الطلب</p>
-              <StatusBadge status={appData.status} />
-              <p className="mt-2 text-xs text-gray-500">
-                الدفع: {appData.paymentStatus === 'PAID' ? 'تم الدفع' : appData.paymentStatus === 'FAILED' ? 'فشل' : 'قيد الدفع'}
-              </p>
-            </motion.div>
-          </div>
-        ) : (
-          <p className="text-center" style={{ color: theme.colors.textSecondary }}>لم يتم العثور على أي طلب بهذا الرمز.</p>
-        )}
+          <motion.div whileHover={{ scale: 1.02 }} className="sm:col-span-2 rounded-lg p-4 text-center"
+            style={{ backgroundColor: theme.colors.background, border: `1px solid ${theme.colors.border}` }}>
+            <p className="font-medium mb-1" style={{ color: theme.colors.text }}>حالة الطلب</p>
+            <StatusBadge status={app.status} />
+            <p className="mt-2 text-xs text-gray-500">
+              الدفع: {app.paymentStatus === 'PAID' ? 'تم الدفع' : app.paymentStatus === 'FAILED' ? 'فشل' : 'قيد الدفع'}
+            </p>
+          </motion.div>
+        </div>
       </motion.div>
     </main>
   );
@@ -177,16 +159,14 @@ function Info({ label, value, icon }: { label: string; value: string; icon: Reac
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  let color = ''; let icon = null;
-
+function StatusBadge({ status }: { status: Application['status'] }) {
+  let color = '', icon = null as ReactNode | null;
   if (status === 'APPROVED') { color = 'text-green-700 bg-green-100'; icon = <CheckCircleIcon className="w-5 h-5 inline-block mr-1" />; }
   else if (status === 'REJECTED') { color = 'text-red-700 bg-red-100'; icon = <XCircleIcon className="w-5 h-5 inline-block mr-1" />; }
   else if (status === 'AWAITING_PAYMENT') { color = 'text-orange-700 bg-orange-100'; icon = <CurrencyDollarIcon className="w-5 h-5 inline-block mr-1" />; }
-  else if (status === 'PENDING') { color = 'text-yellow-700 bg-yellow-100'; icon = <ClockIcon className="w-5 h-5 inline-block mr-1" />; }
+  else { color = 'text-yellow-700 bg-yellow-100'; icon = <ClockIcon className="w-5 h-5 inline-block mr-1" />; } // PENDING
 
-  const text =
-    status === 'APPROVED' ? 'تمت الموافقة'
+  const text = status === 'APPROVED' ? 'تمت الموافقة'
     : status === 'REJECTED' ? 'تم الرفض'
     : status === 'AWAITING_PAYMENT' ? 'في انتظار الدفع'
     : 'قيد المعالجة';

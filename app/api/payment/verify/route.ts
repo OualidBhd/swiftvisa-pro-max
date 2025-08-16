@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import type { ApplicationStatus, PaymentStatus } from '@prisma/client';
+import { sendPaymentEmail } from '@/lib/sendPaymentEmail';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,36 +17,29 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'missing session_id' }, { status: 400 });
     }
 
-    // 1) جيب الجلسة من Stripe
+    // 1) جب السيشن من Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent'] });
 
-    // 2) تأكد الدفع صحيح
+    // 2) تحقق من الدفع
     const isPaid = session.payment_status === 'paid';
     const intentSucceeded =
       typeof session.payment_intent === 'object' &&
       (session.payment_intent as Stripe.PaymentIntent).status === 'succeeded';
     const isComplete = session.status === 'complete';
-
     const paid = (isPaid || intentSucceeded) && isComplete;
 
-    // 3) trackingCode
+    // 3) جيب trackingCode
     const trackingCode = session.metadata?.trackingCode || session.client_reference_id || null;
 
     if (!paid) {
-      return NextResponse.json(
-        { success: false, error: 'not paid', session },
-        { status: 200, headers: { 'Cache-Control': 'no-store' } }
-      );
+      return NextResponse.json({ success: false, error: 'not paid', session }, { status: 200 });
     }
     if (!trackingCode) {
-      return NextResponse.json(
-        { success: false, error: 'missing trackingCode in session', session },
-        { status: 200, headers: { 'Cache-Control': 'no-store' } }
-      );
+      return NextResponse.json({ success: false, error: 'missing trackingCode in session', session }, { status: 200 });
     }
 
-    // 4) حدّث الطلب (بدون Webhook)
-    const data = {
+    // 4) حدّث السجل فالداتابيز (مهم! كان ناقص عندك)
+    const updateData = {
       paymentStatus: 'PAID' as PaymentStatus,
       status: 'PENDING' as ApplicationStatus, // قيد المعالجة
       paymentSessionId: session.id,
@@ -57,28 +51,54 @@ export async function GET(req: Request) {
       amountPaid: session.amount_total != null ? session.amount_total / 100 : undefined,
     };
 
-    // جرّب بالتتبع أولاً، ثم بالجلسة إذا ما لقا
-    const res1 = await prisma.visaApplication.updateMany({ where: { trackingCode }, data });
+    const res1 = await prisma.visaApplication.updateMany({
+      where: { trackingCode },
+      data: updateData,
+    });
     if (res1.count === 0) {
-      await prisma.visaApplication.updateMany({ where: { paymentSessionId: session.id }, data });
+      // لو ما لقاوش بالتتبع، جرّب بالجلسة
+      await prisma.visaApplication.updateMany({
+        where: { paymentSessionId: session.id },
+        data: updateData,
+      });
     }
 
-    // 5) رجّع نسخة طريّة للواجهة
+    // 5) جيب آخر نسخة طريّة من الطلب
     const app = await prisma.visaApplication.findFirst({
       where: { trackingCode },
       select: {
         trackingCode: true,
         status: true,
         paymentStatus: true,
-        amountPaid: true,
+        amountPaid: true,   // Prisma.Decimal
         currency: true,
         fullName: true,
         email: true,
-        visaType: true,
-        travelDate: true,
+        receiptEmailSentAt: true,
         updatedAt: true,
       },
     });
+
+    // 6) حوّل Decimal -> number للإيميل
+    const amount =
+      app?.amountPaid == null
+        ? null
+        : typeof (app.amountPaid as any).toNumber === 'function'
+        ? (app.amountPaid as any).toNumber()
+        : Number(app.amountPaid);
+
+    // 7) ابعث إيصال الدفع مرة واحدة فقط
+    if (app && !app.receiptEmailSentAt && app.email && amount != null) {
+      try {
+        await sendPaymentEmail(app.email, app.trackingCode, amount, app.currency || 'EUR');
+        await prisma.visaApplication.update({
+          where: { trackingCode: app.trackingCode },
+          data: { receiptEmailSentAt: new Date() },
+        });
+      } catch (mailErr) {
+        console.error('✉️ sendPaymentEmail error:', mailErr);
+      }
+    }
 
     return NextResponse.json(
       { success: true, app, sessionId },
