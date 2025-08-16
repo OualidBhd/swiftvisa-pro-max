@@ -1,51 +1,72 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function PaymentSuccessPage() {
-  const [msg, setMsg] = useState('جاري التحقق من الدفع...');
-  const [detail, setDetail] = useState<any>(null);
+  const router = useRouter();
+  const [msg, setMsg] = useState('✅ تم الدفع بنجاح. نثبّت التحديثات...');
 
   useEffect(() => {
-    const run = async () => {
+    let cancelled = false;
+
+    const go = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get('code') || '';
+      const sessionId = url.searchParams.get('session_id') || '';
+
+      // 1) تحقّق اختياري من الجلسة (إذا كاين session_id)
       try {
-        const url = new URL(window.location.href);
-        const sessionId = url.searchParams.get('session_id');
-        if (!sessionId) { setMsg('لا يوجد session_id في الرابط'); return; }
-
-        console.log('🔎 session_id =', sessionId);
-
-        const res = await fetch(`/api/payment/verify?session_id=${sessionId}`);
-        const json = await res.json();
-        console.log('✅ verify response:', json);
-
-        if (!json.success) {
-          setMsg('تعذّر التحقق من الدفع.');
-          setDetail(json);
-          return;
+        if (sessionId) {
+          await fetch('/api/payment/verify?session_id=' + encodeURIComponent(sessionId), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-store' },
+          });
         }
-
-        setMsg('تم الدفع بنجاح ✅ تم تحويل الطلب إلى قيد المعالجة.');
-        setDetail(json.app);
-      } catch (e) {
-        console.error(e);
-        setMsg('وقع خطأ غير متوقع أثناء التحقق.');
+      } catch {
+        /* نكمّلو عادي حتى لو verify ما رجّعش */
       }
+
+      // 2) Poll خفيف باش نتأكد الحالة تحدّثات فـ DB (PAID/PENDING)
+      const pollOnce = async () => {
+        try {
+          const res = await fetch('/api/tracking?ts=' + Date.now(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+            body: JSON.stringify({ trackingCode: code }),
+            cache: 'no-store',
+          });
+          const j = await res.json();
+          return j?.success ? j.application : null;
+        } catch {
+          return null;
+        }
+      };
+
+      // حد أقصى 10 محاولات × 700ms ~ 7 ثواني
+      let tries = 0;
+      while (!cancelled && tries < 10) {
+        const app = await pollOnce();
+        if (app && (app.paymentStatus === 'PAID' || app.status !== 'AWAITING_PAYMENT')) {
+          break;
+        }
+        tries += 1;
+        await new Promise(r => setTimeout(r, 700));
+      }
+
+      // 3) Redirect للداشبورد مع كسر الكاش
+      const dest = code ? `/dashboard?code=${encodeURIComponent(code)}&ts=${Date.now()}` : `/dashboard?ts=${Date.now()}`;
+      setMsg('تم الدفع ✅ — نحولك للوحة التحكم...');
+      setTimeout(() => !cancelled && router.replace(dest), 300);
     };
-    run();
-  }, []);
+
+    go();
+    return () => { cancelled = true; };
+  }, [router]);
 
   return (
-    <main style={{padding: 24}}>
-      <h1>Payment Result</h1>
+    <main style={{ padding: 24, textAlign: 'center' }}>
+      <h1>✅ نجاح الدفع</h1>
       <p>{msg}</p>
-      {detail && (
-        <pre style={{marginTop:12, background:'#f6f6f6', padding:12}}>
-          {JSON.stringify(detail, null, 2)}
-        </pre>
-      )}
-      <a href="/tracking" style={{display:'inline-block', marginTop:16, padding:'8px 14px', background:'#111', color:'#fff', borderRadius:8}}>
-        الذهاب لصفحة التتبع
-      </a>
     </main>
   );
 }
