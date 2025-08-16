@@ -190,11 +190,29 @@ function PaymentField({ label, value, icon }: { label: string; value: string; ic
 }
 
 function PaymentStatus({ status }: { status: 'PENDING'|'PAID'|'FAILED' }) {
-  const bg = status === 'PAID' ? '#BBF7D0' : status === 'FAILED' ? '#FCA5A5' : '#FDE68A';
-  const text = status === 'PAID' ? 'تم الدفع' : status === 'FAILED' ? 'فشل الدفع' : 'قيد الدفع';
+  const bg =
+    status === 'PAID'
+      ? '#BBF7D0' // أخضر فاتح
+      : status === 'FAILED'
+      ? '#FCA5A5' // أحمر فاتح
+      : '#FDE68A'; // أصفر فاتح
+
+  const text =
+    status === 'PAID'
+      ? 'تم الدفع'
+      : status === 'FAILED'
+      ? 'فشل الدفع'
+      : 'قيد الدفع';
+
   return (
-    <p className="font-bold text-lg px-4 py-2 rounded-lg border-2"
-       style={{ backgroundColor: bg, borderColor: theme.colors.border }}>
+    <p
+      className="font-bold text-lg px-4 py-2 rounded-lg border-2"
+      style={{
+        backgroundColor: bg,
+        borderColor: theme.colors.border,
+        color: '#000' // النص ديالهم كاملين أسود
+      }}
+    >
       {text}
     </p>
   );

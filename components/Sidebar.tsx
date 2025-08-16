@@ -44,6 +44,20 @@ export default function Sidebar() {
     }
   };
 
+  // Logout (يمسح الجلسة ويحوّل للهوم)
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/tracking/session', { method: 'DELETE' }); // مسح الكوكي
+    } catch {}
+    try {
+      localStorage.removeItem('tracking_code');
+      localStorage.removeItem('trackingEmail');
+      localStorage.removeItem('trackingCode');
+    } catch {}
+    closeOnMobile();
+    router.push('/');
+  };
+
   const activeColor = '#f4b400'; // لون الخلفية للأكتيف
   const iconActiveColor = '#e1c759'; // لون أيقونة الأكتيف
 
@@ -157,6 +171,16 @@ export default function Sidebar() {
               );
             })}
           </nav>
+        </div>
+
+        {/* زرّ الخروج بالأحمر في القاع */}
+        <div className="pt-4 border-t border-gray-300">
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-lg px-4 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 active:bg-red-800 transition-colors"
+          >
+            خروج
+          </button>
         </div>
       </aside>
     </>

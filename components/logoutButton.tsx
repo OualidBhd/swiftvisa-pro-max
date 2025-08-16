@@ -1,0 +1,29 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+
+export default function AdminLogoutButton() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' }); // مسح الكوكي من السيرفر
+    } catch {}
+
+    startTransition(() => {
+      router.push('/admin-login'); // رجوع لصفحة تسجيل الدخول للأدمين
+    });
+  }
+
+  return (
+    <button
+      onClick={handleLogout}
+      disabled={isPending}
+      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+    >
+      {isPending ? 'جارٍ تسجيل الخروج...' : 'تسجيل الخروج'}
+    </button>
+  );
+}

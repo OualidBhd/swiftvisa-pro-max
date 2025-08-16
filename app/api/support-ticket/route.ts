@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { prisma }  from '@/lib/prisma'; // ✅ استدعاء Prisma Client
+import { prisma } from '@/lib/prisma';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,12 +19,11 @@ export async function POST(req: Request) {
       },
     });
 
-    // 2. إعداد الإيميل
+    // 📧 المحتوى المشترك
     const emailContent = `
       <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-        <h2 style="color: #1F2D5A;">تم استلام طلب الدعم الخاص بك</h2>
-        <p>مرحباً،</p>
-        <p>نشكر لك تواصلك معنا، هذا هو ملخص طلبك:</p>
+        <h2 style="color: #1F2D5A;">طلب دعم جديد</h2>
+        <p><strong>البريد:</strong> ${email}</p>
         <p><strong>رقم التتبع:</strong> ${trackingCode}</p>
         <p><strong>الموضوع:</strong> ${subject}</p>
         <p><strong>الرسالة:</strong></p>
@@ -35,14 +34,25 @@ export async function POST(req: Request) {
       </div>
     `;
 
-    // 3. إرسال البريد الإلكتروني عبر Resend
+    // 2. إرسال الإيميل للعميل
     await resend.emails.send({
       from: 'SwiftVisa <noreply@swiftvisaonline.com>',
       to: email,
-      subject: `🎟️ تذكرة دعم - ${subject}`,
+      subject: `🎟️ تم استلام تذكرتك - ${subject}`,
       html: emailContent,
     });
 
+    // 3. إرسال نسخة للإيميل الإداري
+    await resend.emails.send({
+      from: 'SwiftVisa <noreply@swiftvisaonline.com>',
+      to: process.env.ADMIN_EMAIL as string, // ← جاي من env
+      subject: `📩 طلب دعم جديد من ${email}`,
+      html: emailContent,
+    });
+    // 4. إرجاع النتيجة
+    if (!newTicket) {
+      return NextResponse.json({ success: false, error: 'حدث خطأ أثناء إنشاء التذكرة' }, { status: 500 });
+    }
     return NextResponse.json({ success: true, ticket: newTicket });
   } catch (error) {
     console.error('Email or DB Error:', error);
