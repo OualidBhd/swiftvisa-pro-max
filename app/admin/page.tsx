@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 
 type AppItem = {
-  id: number | string;
+  id: string; // cuid من Prisma
   email: string;
   trackingCode: string;
-  fromCountry?: string | null;
-  toCountry?: string | null;
+  countryOfOrigin?: string | null;     // ✅ الأسماء الصحيحة
+  destinationCountry?: string | null;  // ✅
   visaType?: string | null;
   travelDate?: string | null;
-  status?: string | null;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
   paymentStatus?: string | null;
   passportImage?: string | null;
   residencePermit?: string | null;
@@ -26,7 +26,10 @@ export default function AdminPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/applications', { cache: 'no-store' });
+      const res = await fetch('/api/admin/applications', {
+        cache: 'no-store',
+        credentials: 'include', // ✅ مهم
+      });
       const data = await res.json();
       if (data?.success) setApps(data.applications);
       else setApps([]);
@@ -37,16 +40,19 @@ export default function AdminPage() {
 
   useEffect(() => { load(); }, []);
 
-  async function updateStatus(id: AppItem['id'], status: 'APPROVED' | 'REJECTED') {
+  async function updateStatus(trackingCode: string, status: 'APPROVED' | 'REJECTED') {
     const res = await fetch('/api/admin/applications', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status }),
+      credentials: 'include', // ✅ مهم
+      body: JSON.stringify({ trackingCode, status }), // ✅ الAPI كتسنى trackingCode
     });
+
     if (res.ok) {
-      setApps(prev => prev.map(a => (a.id === id ? { ...a, status } : a)));
+      setApps(prev => prev.map(a => (a.trackingCode === trackingCode ? { ...a, status } as AppItem : a)));
     } else {
-      alert('تعذر التحديث');
+      const err = await res.json().catch(() => null);
+      alert(`تعذر التحديث${err?.error ? `: ${err.error}` : ''}`);
     }
   }
 
@@ -57,7 +63,7 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold">لوحة الأدمين — الطلبات</h1>
           <form onSubmit={async (e) => {
             e.preventDefault();
-            await fetch('/api/admin/logout', { method: 'POST' });
+            await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
             window.location.href = '/admin-login';
           }}>
             <button className="px-4 py-2 rounded bg-red-600 text-white">خروج</button>
@@ -76,6 +82,8 @@ export default function AdminPage() {
                 .map(s => s.trim())
                 .filter(Boolean);
 
+              const date = app.createdAt ? new Date(app.createdAt).toISOString().slice(0,10) : '-';
+
               return (
                 <div key={app.id} className="bg-white rounded-lg border p-4 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -84,15 +92,15 @@ export default function AdminPage() {
                       <p className="text-sm text-gray-500">🔑 {app.trackingCode}</p>
                     </div>
                     <div className="text-right text-sm text-gray-500">
-                      <p>{app.createdAt?.slice(0, 10)}</p>
+                      <p>{date}</p>
                       {app.status && <p className="mt-1">الحالة: {app.status}</p>}
                       {app.paymentStatus && <p>الدفع: {app.paymentStatus}</p>}
                     </div>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                    <p><span className="text-gray-500">من:</span> {app.fromCountry || '-'}</p>
-                    <p><span className="text-gray-500">إلى:</span> {app.toCountry || '-'}</p>
+                    <p><span className="text-gray-500">من:</span> {app.countryOfOrigin || '-'}</p>
+                    <p><span className="text-gray-500">إلى:</span> {app.destinationCountry || '-'}</p>
                     <p><span className="text-gray-500">نوع التأشيرة:</span> {app.visaType || '-'}</p>
                     <p><span className="text-gray-500">تاريخ السفر:</span> {app.travelDate || '-'}</p>
                   </div>
@@ -113,10 +121,18 @@ export default function AdminPage() {
                   </div>
 
                   <div className="mt-4 flex gap-3">
-                    <button onClick={() => updateStatus(app.id, 'APPROVED')}
-                      className="px-4 py-2 rounded bg-green-600 text-white">قبول ✅</button>
-                    <button onClick={() => updateStatus(app.id, 'REJECTED')}
-                      className="px-4 py-2 rounded bg-red-600 text-white">رفض ❌</button>
+                    <button
+                      onClick={() => updateStatus(app.trackingCode, 'APPROVED')}
+                      className="px-4 py-2 rounded bg-green-600 text-white"
+                    >
+                      قبول ✅
+                    </button>
+                    <button
+                      onClick={() => updateStatus(app.trackingCode, 'REJECTED')}
+                      className="px-4 py-2 rounded bg-red-600 text-white"
+                    >
+                      رفض ❌
+                    </button>
                   </div>
                 </div>
               );
